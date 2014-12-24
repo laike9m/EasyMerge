@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>task</title>
+  <script type="text/javascript" src="/js/jquery-1.11.2.min.js"></script>
+  <script src="/js/jquery.cookie.js"></script>
+</head>
+<body>
+<script type=text/javascript>
+  var task_id = $.cookie("task_id");
+  setInterval(function(){
+    $(function() {
+      $.getJSON('/task/' + task_id + '?fetch=true', {
+      }, function(data) {
+        $("#result").text($("#result").text() + data.result);
+      });
+    });
+  }, 1000);
+</script>
+ <p id=result>?</p>
+</body>
+</html>
