@@ -10,15 +10,20 @@
 <body>
 <script type=text/javascript>
   var task_id = $.cookie("task_id");
-  setInterval(function(){
+  var intervalObj = setInterval(function(){
     $(function() {
       $.getJSON('/task/' + task_id + '?fetch=true', {
       }, function(data) {
-        $("#result").text($("#result").text() + data.result);
+        if (data.result == "quit") {
+          console.log("task complete");
+          clearInterval(intervalObj);
+        } else if (data.result) {  // 如果没有新输出, result is undefined
+          $("#result").append("<br/>" + data.result);
+        }
       });
     });
-  }, 1000);
+  }, 200);
 </script>
- <p id=result>?</p>
+ <p id=result></p>
 </body>
 </html>
