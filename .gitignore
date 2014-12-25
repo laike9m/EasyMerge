@@ -3,3 +3,4 @@
 *.pyo
 .idea
 ada-merge
+erl_crash.dump

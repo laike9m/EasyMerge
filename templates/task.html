@@ -9,6 +9,8 @@
 </head>
 <body>
 <script type=text/javascript>
+  var JOBLINK = "http://10.100.1.35:50030/jobdetails.jsp?jobid=";
+  var TARGET = 'Running job: ';
   var task_id = $.cookie("task_id");
   var intervalObj = setInterval(function(){
     $(function() {
@@ -16,9 +18,16 @@
       }, function(data) {
         if (data.result == "quit") {
           console.log("task complete");
+          $("#result").append("<br/><br />" + "mapreduce task complete");
           clearInterval(intervalObj);
         } else if (data.result) {  // 如果没有新输出, result is undefined
-          $("#result").append("<br/>" + data.result);
+          var textToAdd = data.result;
+          if (i = textToAdd.indexOf()) {
+            var jobId = textToAdd.slice(i + TARGET.length);
+            textToAdd = textToAdd.slice(0, i)
+                + "</a style='color:red' href='" + JOBLINK + jobId + "'" + jobId + "</a>";
+          }
+          $("#result").append("<br/>" + textToAdd);
         }
       });
     });
