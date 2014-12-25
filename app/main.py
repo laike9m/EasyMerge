@@ -49,6 +49,7 @@ def init_mr_task():
     global connection
     global channel
     if connection.is_closed:
+        print("recreate connection")
         connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
         channel = connection.channel()
     channel.queue_declare(queue=new_task_id, durable=True, auto_delete=True)
