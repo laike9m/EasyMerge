@@ -46,11 +46,8 @@ def init_mr_task():
     print(request.form.items())
     new_task_id = str(arrow.utcnow().timestamp)
     init_mr_task.apply_async(task_id=new_task_id)
-    redirect_to_index = redirect('/task/%s' % new_task_id)
-    response = app.make_response(redirect_to_index)
-    response.set_cookie('task_id', new_task_id)
     channel.queue_declare(queue=new_task_id, durable=True, auto_delete=True)
-    return response
+    return redirect('/task/%s' % new_task_id)
 
 
 def make_celery(app):
