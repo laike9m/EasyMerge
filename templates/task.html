@@ -26,7 +26,7 @@
           if (i != -1) {
             var jobId = textToAdd.slice(i + TARGET.length);
             textToAdd = textToAdd.slice(0, i)
-                + "</a style='color:red' href='" + JOBLINK + jobId + "'" + jobId + "</a>";
+                + "<a style='color:red' href='" + JOBLINK + jobId + "'>" + jobId + "</a>";
           }
           $("#result").append("<br/>" + textToAdd);
         }
