@@ -9,7 +9,7 @@ import arrow
 import pika
 import utils
 
-app = Flask(__name__, template_folder='../templates')
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
 channel = connection.channel()
 
@@ -18,12 +18,6 @@ channel = connection.channel()
 def index():
     config = utils.get_config()
     return render_template('index.html', config=config)
-
-
-@app.route('/js/<path:filename>')
-def serve_static(filename):
-    root_dir = os.path.dirname(os.getcwd())
-    return send_from_directory(os.path.join(root_dir, 'static', 'js'), filename)
 
 
 @app.route('/task/<string:task_id>')
@@ -57,11 +51,6 @@ def init_mr_task():
     response.set_cookie('task_id', new_task_id)
     channel.queue_declare(queue=new_task_id, durable=True, auto_delete=True)
     return response
-
-
-@app.route('/output/', methods=['POST'])
-def receive_output():
-    pass
 
 
 def make_celery(app):
