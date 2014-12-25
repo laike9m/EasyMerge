@@ -80,7 +80,10 @@ celery = make_celery(app)
 def init_mr_task(self):
     """ 这个脚本的路径 are relative path to where celery is run
     """
-    proc = Popen(['app/sample.sh'], shell=True, stdout=PIPE)
+    if os.path.exists('ada-merge/celery-mr-task.sh'):
+        proc = Popen(['ada-merge/celery-mr-task.sh'], shell=True, stdout=PIPE)
+    else:
+        proc = Popen(['app/sample.sh'], shell=True, stdout=PIPE)
     while proc.returncode is None:  # running
         line = proc.stdout.readline()
         print line
