@@ -46,6 +46,11 @@ def init_mr_task():
     print(request.form.items())
     new_task_id = str(arrow.utcnow().timestamp)
     init_mr_task.apply_async(task_id=new_task_id)
+    global connection
+    global channel
+    if connection.is_closed:
+        connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+        channel = connection.channel()
     channel.queue_declare(queue=new_task_id, durable=True, auto_delete=True)
     return redirect('/task/%s' % new_task_id)
 

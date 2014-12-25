@@ -18,11 +18,12 @@
       }, function(data) {
         if (data.result == "quit") {
           console.log("task complete");
-          $("#result").append("<br/><br />" + "mapreduce task complete");
+          $("#result").append("<br/><br />" + "Task complete");
           clearInterval(intervalObj);
         } else if (data.result) {  // 如果没有新输出, result is undefined
           var textToAdd = data.result;
-          if (i = textToAdd.indexOf()) {
+          var i = textToAdd.indexOf(TARGET);
+          if (i != -1) {
             var jobId = textToAdd.slice(i + TARGET.length);
             textToAdd = textToAdd.slice(0, i)
                 + "</a style='color:red' href='" + JOBLINK + jobId + "'" + jobId + "</a>";
