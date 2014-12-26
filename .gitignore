@@ -4,3 +4,4 @@
 .idea
 ada-merge
 erl_crash.dump
+flask.log

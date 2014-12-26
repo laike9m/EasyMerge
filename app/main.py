@@ -1,6 +1,8 @@
 # coding: utf-8
 
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 from subprocess import Popen, PIPE
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask import send_from_directory, make_response
@@ -10,6 +12,9 @@ import pika
 import utils
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
+handler = RotatingFileHandler('../flask.log', maxBytes=10000, backupCount=1)
+handler.setLevel(logging.INFO)
+app.logger.addHandler(handler)
 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
 channel = connection.channel()
 
@@ -42,18 +47,22 @@ def task(task_id):
 
 @app.route('/new_mr_task/', methods=['POST'])
 def init_mr_task():
-    print(request.method)
-    print(request.form.items())
-    new_task_id = str(arrow.utcnow().timestamp)
-    init_mr_task.apply_async(task_id=new_task_id)
-    global connection
-    global channel
-    if connection.is_closed:
-        print("recreate connection")
-        connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-        channel = connection.channel()
-    channel.queue_declare(queue=new_task_id, durable=True, auto_delete=True)
-    return redirect('/task/%s' % new_task_id)
+    try:
+        print(request.method)
+        print(request.form.items())
+        new_task_id = str(arrow.utcnow().timestamp)
+        init_mr_task.apply_async(task_id=new_task_id)
+        global connection
+        global channel
+        if connection.is_closed:
+            print("recreate connection")
+            connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+            channel = connection.channel()
+        channel.queue_declare(queue=new_task_id, durable=True, auto_delete=True)
+        return redirect('/task/%s' % new_task_id)
+    except Exception as e:
+        print(e)
+        app.logger.error(str(e))
 
 
 def make_celery(app):
@@ -77,7 +86,8 @@ app.config.update(
     CELERY_BROKER_URL='amqp://localhost:5672',
     CELERY_RESULT_BACKEND='amqp://',
     CELERY_QUEUE_HA_POLICY='all',
-    CELERY_TASK_RESULT_EXPIRES=None
+    CELERY_TASK_RESULT_EXPIRES=None,
+    PROPAGATE_EXCEPTIONS=True
 )
 celery = make_celery(app)
 
