@@ -22,6 +22,7 @@
         } else if (data.result) {  // 如果没有新输出, result is undefined
           $("#result").append("<br/>" + insertLink(data.result));
         }
+        window.scrollTo(0, document.body.scrollHeight);
       });
     });
   }, 200);
