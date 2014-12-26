@@ -5,7 +5,7 @@ function insertLink(textToAdd) {
   var i = textToAdd.indexOf(TARGET);
   if (i != -1) {
     var jobId = textToAdd.slice(i + TARGET.length);
-    textToAdd = textToAdd.slice(0, i)
+    textToAdd = textToAdd.slice(0, i + TARGET.length)
       + "<a style='color:red' href='" + JOBLINK + jobId + "'>" + jobId + "</a>";
   }
   return textToAdd;
