@@ -6,11 +6,10 @@
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
   <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-1.11.2.min.js') }}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.cookie.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/utils.js') }}"></script>
 </head>
 <body>
 <script type=text/javascript>
-  var JOBLINK = "http://10.100.1.35:50030/jobdetails.jsp?jobid=";
-  var TARGET = 'Running job: ';
   var task_id = $.cookie("task_id");
   var intervalObj = setInterval(function(){
     $(function() {
@@ -21,14 +20,7 @@
           $("#result").append("<br/><br />" + "Task complete");
           clearInterval(intervalObj);
         } else if (data.result) {  // 如果没有新输出, result is undefined
-          var textToAdd = data.result;
-          var i = textToAdd.indexOf(TARGET);
-          if (i != -1) {
-            var jobId = textToAdd.slice(i + TARGET.length);
-            textToAdd = textToAdd.slice(0, i)
-                + "<a style='color:red' href='" + JOBLINK + jobId + "'>" + jobId + "</a>";
-          }
-          $("#result").append("<br/>" + textToAdd);
+          $("#result").append("<br/>" + insertLink(data.result));
         }
       });
     });
