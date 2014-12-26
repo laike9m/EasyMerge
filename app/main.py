@@ -12,6 +12,7 @@ import pika
 import utils
 import traceback
 
+
 file_abspath = os.path.abspath(__file__)
 EasyMerge_root = os.path.dirname(os.path.dirname(file_abspath))
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
@@ -19,11 +20,10 @@ handler = RotatingFileHandler(
     os.path.join(EasyMerge_root, 'logs', 'flask.log'),
     maxBytes=10000, backupCount=1
 )
-
 handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
-connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-channel = connection.channel()
+
+connection_keeper = {}
 
 
 @app.route('/')
@@ -34,6 +34,7 @@ def index():
 
 @app.route('/task/<string:task_id>')
 def task(task_id):
+    channel = connection_keeper[task_id].channel()
     print(request.path)
     if request.args.get('fetch', ''):
         method_frame, header_frame, body = channel.basic_get(task_id)
@@ -41,6 +42,7 @@ def task(task_id):
             channel.basic_ack(method_frame.delivery_tag)
             if body == "quit":
                 print("task finish")
+                connection_keeper[task_id].close()
             print method_frame, header_frame, body
             return jsonify(result=body)
         else:
@@ -58,12 +60,10 @@ def init_mr_task():
     print(request.form.items())
     new_task_id = str(arrow.utcnow().timestamp)
     init_mr_task.apply_async(task_id=new_task_id)
-    global connection
-    global channel
-    if not connection.is_open:
-        print("recreate connection")
-        connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-        channel = connection.channel()
+    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    channel = connection.channel()
+    #global connection_keeper
+    connection_keeper[str(new_task_id)] = connection
     channel.queue_declare(queue=new_task_id, durable=True, auto_delete=True)
     return redirect('/task/%s' % new_task_id)
 
