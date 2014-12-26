@@ -86,6 +86,12 @@ celery = make_celery(app)
 def init_mr_task(self):
     """ 这个脚本的路径 are relative path to where celery is run
     """
+    global connection
+    global channel
+    if connection.is_closed:
+        print("recreate connection")
+        connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+        channel = connection.channel()
     if os.path.exists('ada-merge/celery-mr-task.sh'):
         proc = Popen(['ada-merge/celery-mr-task.sh'], shell=True, stdout=PIPE)
     else:
@@ -106,6 +112,7 @@ def init_mr_task(self):
                 body="quit"
             )
             break
+    proc.communicate()
 
 
 if __name__ == '__main__':
