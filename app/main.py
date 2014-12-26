@@ -12,8 +12,14 @@ import pika
 import utils
 import traceback
 
+file_abspath = os.path.abspath(__file__)
+EasyMerge_root = os.path.dirname(os.path.dirname(file_abspath))
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
-handler = RotatingFileHandler('../logs/flask.log', maxBytes=10000, backupCount=1)
+handler = RotatingFileHandler(
+    os.path.join(EasyMerge_root, 'logs', 'flask.log'),
+    maxBytes=10000, backupCount=1
+)
+
 handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
