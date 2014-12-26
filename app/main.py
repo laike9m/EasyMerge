@@ -10,6 +10,7 @@ from celery import Celery
 import arrow
 import pika
 import utils
+import traceback
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 handler = RotatingFileHandler('../flask.log', maxBytes=10000, backupCount=1)
@@ -61,7 +62,7 @@ def init_mr_task():
         channel.queue_declare(queue=new_task_id, durable=True, auto_delete=True)
         return redirect('/task/%s' % new_task_id)
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         app.logger.error(str(e))
 
 
