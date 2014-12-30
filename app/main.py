@@ -9,7 +9,7 @@ from flask import send_from_directory, make_response
 from celery import Celery
 import arrow
 import pika
-import utils
+from utils import get_config
 import traceback
 
 
@@ -28,8 +28,13 @@ connection_keeper = {}
 
 @app.route('/')
 def index():
-    config = utils.get_config()
+    config = get_config("merge.xml")
     return render_template('index.html', config=config)
+
+
+@app.route('/config/<path:filepath>')
+def show_config(filepath):
+    return jsonify(**get_config(filepath))
 
 
 @app.route('/task/<string:task_id>')
@@ -44,6 +49,7 @@ def task(task_id):
                 print("task finish")
                 connection_keeper[task_id].close()
             print method_frame, header_frame, body
+            del connection_keeper[task_id]
             return jsonify(result=body)
         else:
             print 'No message returned'
@@ -62,7 +68,6 @@ def init_mr_task():
     init_mr_task.apply_async(task_id=new_task_id)
     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
     channel = connection.channel()
-    #global connection_keeper
     connection_keeper[str(new_task_id)] = connection
     channel.queue_declare(queue=new_task_id, durable=True, auto_delete=True)
     return redirect('/task/%s' % new_task_id)

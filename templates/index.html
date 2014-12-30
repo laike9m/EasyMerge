@@ -60,20 +60,65 @@
 
 <div class="container">
 
-  <form action="/new_mr_task/" method="Post" target="_blank">
+  <form id="config" action="/new_mr_task/" method="Post" target="_blank">
+    <h2>merge.xml</h2>
     {% for k, v in config.iteritems() %}
-      <div class="row">
-        <div class="col-md-2 .col-lg-offset-4">
-          <div class="input-group">
-            <span class="input-group-addon">{{ k }}</span>
-            <input name={{ k }} type="text" class="form-control" placeholder={{ v }}>
-          </div>
-        </div>
+      <div class="input-group">
+        <span class="input-group-addon">{{ k }}</span>
+        <input name="{{ k }}" type="text" class="form-control" placeholder="{{ v }}">
       </div>
     {% endfor %}
-    <input type="submit" value="执行">
   </form>
+  <button value="确定" onclick="get_config()">确定</button>
+  <script>
+    function get_config(){
+      var configForm = $("#config");
+      console.log("good");
+      var coreSiteInput = $("#config div input[name='core-site']");
+      var mapredSiteInput = $("#config div input[name='mapred-site']");
+      var hbaseSiteInput = $("#config div input[name='hbase-site']");
+      var coreSite = coreSiteInput.val();
+      var mapredSite = mapredSiteInput.val();
+      var hbaseSite = hbaseSiteInput.val();
+      if (coreSite === '') {
+        coreSite = coreSiteInput.attr("placeholder");
+      }
+      if (mapredSite === '') {
+        mapredSite = mapredSiteInput.attr("placeholder");
+      }
+      if (hbaseSite === '') {
+        hbaseSite = hbaseSiteInput.attr("placeholder");
+      }
+      configForm.append($("<h2>core-site.xml</h2>"));
+      updatePageWithXml(coreSite, function(){
+        configForm.append($("<h2>mapred-site.xml</h2>"));
+        updatePageWithXml(mapredSite, function(){
+          configForm.append($("<h2>hbase-site.xml</h2>"));
+          updatePageWithXml(hbaseSite, function(){
+            configForm.append($("<button type='submit'>RUN</button>"));
+          });
+        });
+      });
 
+      function updatePageWithXml(filepath, callback) {
+        $.getJSON('/config/' + filepath, {
+        }, function (data) {
+          $.each(data, function(key, value){
+            console.log(key, value);
+            configForm.append(
+              $("<div class='input-group'></div>")
+                .append($("<span class='input-group-addon'></span>").text(key))
+                .append($("<input type='text' class='form-control'>")
+                  .attr("name", key)
+                  .attr("placeholder", value)
+              )
+            );
+          });
+          callback();
+        });
+      }
+    }
+  </script>
 </div>
 
 </body>
