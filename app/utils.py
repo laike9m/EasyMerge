@@ -36,8 +36,9 @@ def update_config(filepath, configs):
     root = config_xml_tree.getroot()
 
     for child in root:
-        print(child[0].text)
-        print(configs[child[0].text])
-        #root.append(child)
+        try:
+            child[1].text = configs[child[0].text]
+        except KeyError:
+            print(child[0].text + "not in configs")
 
-    #ET.ElementTree(root).write("tmp.xml")
+    ET.ElementTree(root).write(filepath)

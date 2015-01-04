@@ -64,9 +64,10 @@ def task(task_id):
 def init_mr_task():
     from pprint import pprint
     configs = {t[0]: t[1] for t in request.form.items()}
+    update_config('merge.xml', configs)
     update_config(configs['core-site'], configs)
-    #update_config(configs['mapred-site'], configs)
-    #update_config(configs['hbase-site'], configs)
+    update_config(configs['mapred-site'], configs)
+    update_config(configs['hbase-site'], configs)
 
     return "hello"
     '''

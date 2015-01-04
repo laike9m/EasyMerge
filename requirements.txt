@@ -8,3 +8,5 @@ wsgiref==0.1.2
 celery==3.1.17
 arrow==0.4.4
 pika==0.9.14
+requests==2.5.1
+FormEncode==1.2.6
