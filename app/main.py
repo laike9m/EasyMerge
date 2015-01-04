@@ -9,7 +9,7 @@ from flask import send_from_directory, make_response
 from celery import Celery
 import arrow
 import pika
-from utils import get_config
+from utils import get_config, update_config
 import traceback
 
 
@@ -62,8 +62,14 @@ def task(task_id):
 
 @app.route('/new_mr_task/', methods=['POST'])
 def init_mr_task():
-    print(request.method)
-    print(request.form.items())
+    from pprint import pprint
+    configs = {t[0]: t[1] for t in request.form.items()}
+    update_config(configs['core-site'], configs)
+    #update_config(configs['mapred-site'], configs)
+    #update_config(configs['hbase-site'], configs)
+
+    return "hello"
+    '''
     new_task_id = str(arrow.utcnow().timestamp)
     init_mr_task.apply_async(task_id=new_task_id)
     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
@@ -71,6 +77,7 @@ def init_mr_task():
     connection_keeper[str(new_task_id)] = connection
     channel.queue_declare(queue=new_task_id, durable=True, auto_delete=True)
     return redirect('/task/%s' % new_task_id)
+    '''
 
 
 def make_celery(app):

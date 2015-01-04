@@ -15,49 +15,19 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
-  <!-- Custom CSS -->
-  <style>
-    body {
-      padding-top: 70px;
-      /* Required padding for .navbar-fixed-top. Remove if using .navbar-static-top. Change if height of navigation changes. */
-    }
-  </style>
 </head>
 
 <body>
 
-<!-- Navigation -->
-<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-  <div class="container">
-    <!-- Brand and toggle get grouped for better mobile display -->
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a class="navbar-brand" href="#">Start Bootstrap</a>
-    </div>
-    <!-- Collect the nav links, forms, and other content for toggling -->
-    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-      <ul class="nav navbar-nav">
-        <li>
-          <a href="#">About</a>
-        </li>
-        <li>
-          <a href="#">Services</a>
-        </li>
-        <li>
-          <a href="#">Contact</a>
-        </li>
-      </ul>
-    </div>
-    <!-- /.navbar-collapse -->
+<div class="row">
+  <div  class="col-lg-4 col-lg-offset-1">
+  <p>
+    使用说明：先修改 merge.xml, 点击确定键, 之后会显示 core-site, mapred-site, hbase-site 的配置
+    <br/> 这时就不能修改 core-site, mapred-site, hbase-site 的值了
+    <br/> 按照需求修改完所有配置之后，点击执行
+  </p>
   </div>
-  <!-- /.container -->
-</nav>
-
+</div>
 <div class="container">
 
   <form id="config" action="/new_mr_task/" method="Post" target="_blank">
@@ -71,24 +41,19 @@
   </form>
   <button value="确定" onclick="get_config()">确定</button>
   <script>
+    $(document).ready(function(){
+      $.each($("div.input-group input"), function(index, input){
+        $(input).val($(input).attr("placeholder"));
+      });
+    });
     function get_config(){
       var configForm = $("#config");
-      console.log("good");
       var coreSiteInput = $("#config div input[name='core-site']");
       var mapredSiteInput = $("#config div input[name='mapred-site']");
       var hbaseSiteInput = $("#config div input[name='hbase-site']");
       var coreSite = coreSiteInput.val();
       var mapredSite = mapredSiteInput.val();
       var hbaseSite = hbaseSiteInput.val();
-      if (coreSite === '') {
-        coreSite = coreSiteInput.attr("placeholder");
-      }
-      if (mapredSite === '') {
-        mapredSite = mapredSiteInput.attr("placeholder");
-      }
-      if (hbaseSite === '') {
-        hbaseSite = hbaseSiteInput.attr("placeholder");
-      }
       configForm.append($("<h2>core-site.xml</h2>"));
       updatePageWithXml(coreSite, function(){
         configForm.append($("<h2>mapred-site.xml</h2>"));
@@ -99,18 +64,21 @@
           });
         });
       });
+      coreSiteInput.attr('readonly', true);
+      mapredSiteInput.attr('readonly', true);
+      hbaseSiteInput.attr('readonly', true);
 
       function updatePageWithXml(filepath, callback) {
         $.getJSON('/config/' + filepath, {
         }, function (data) {
           $.each(data, function(key, value){
-            console.log(key, value);
             configForm.append(
               $("<div class='input-group'></div>")
                 .append($("<span class='input-group-addon'></span>").text(key))
                 .append($("<input type='text' class='form-control'>")
                   .attr("name", key)
                   .attr("placeholder", value)
+                  .val(value)
               )
             );
           });
