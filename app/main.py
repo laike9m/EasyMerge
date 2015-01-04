@@ -48,8 +48,8 @@ def task(task_id):
             if body == "quit":
                 print("task finish")
                 connection_keeper[task_id].close()
+                del connection_keeper[task_id]
             print method_frame, header_frame, body
-            del connection_keeper[task_id]
             return jsonify(result=body)
         else:
             print 'No message returned'
@@ -68,17 +68,19 @@ def init_mr_task():
     update_config(configs['core-site'], configs)
     update_config(configs['mapred-site'], configs)
     update_config(configs['hbase-site'], configs)
+    channels = request.form.getlist("channel")
+    merge_json = configs.get("merge-json")
 
-    return "hello"
-    '''
     new_task_id = str(arrow.utcnow().timestamp)
-    init_mr_task.apply_async(task_id=new_task_id)
     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
     channel = connection.channel()
     connection_keeper[str(new_task_id)] = connection
     channel.queue_declare(queue=new_task_id, durable=True, auto_delete=True)
+
+    # apply_async 要放在channle声明之后, 否则会出现无法在connection_keeper中找到new_task_id
+    # 这一项的问题, 原因未知
+    init_mr_task.apply_async((channels, merge_json), task_id=new_task_id)
     return redirect('/task/%s' % new_task_id)
-    '''
 
 
 def make_celery(app):
@@ -109,9 +111,11 @@ celery = make_celery(app)
 
 
 @celery.task(name="app.main.init_mr_task", bind=True)
-def init_mr_task(self):
+def init_mr_task(self, channel, merge_json):
     """ 这个脚本的路径 are relative path to where celery is run
     """
+    print("channel:", channel)
+    print("merge-json:", merge_json)
     conn = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
     task_channel = conn.channel()
     if os.path.exists('ada-merge/celery-mr-task.sh'):

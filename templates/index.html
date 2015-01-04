@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -30,20 +31,35 @@
 </div>
 <div class="container">
 
-  <form id="config" action="/new_mr_task/" method="Post" target="_blank">
-    <h2>merge.xml</h2>
-    {% for k, v in config.iteritems() %}
+  <form action="/new_mr_task/" method="Post" target="_blank">
+    <div id="config">
+      <h2>merge.xml</h2>
+      {% for k, v in config.iteritems() %}
+        <div class="input-group">
+          <span class="input-group-addon">{{ k }}</span>
+          <input name="{{ k }}" type="text" class="form-control" placeholder="{{ v }}">
+        </div>
+      {% endfor %}
+    </div>
+    <div id="userinput" style="margin-top: 10px">
+      {% set channels = ['baidubaike','wikibaike','web','news','bbs','weibo','hudongbaike'] %}
+      {% for channel in channels %}
+        <label class="checkbox-inline">
+          <input type="checkbox" name="channel" value={{channel}}>{{channel}}
+        </label>
+      {% endfor %}
       <div class="input-group">
-        <span class="input-group-addon">{{ k }}</span>
-        <input name="{{ k }}" type="text" class="form-control" placeholder="{{ v }}">
+        <span class="input-group-addon">merge-json</span>
+        <input name="merge-json" type="text" class="form-control" placeholder="/tmp/sname-merge">
       </div>
-    {% endfor %}
+    </div>
   </form>
   <div style="text-align: center">
     <button id='confirm' value="确定" onclick="get_config()">确定</button>
   </div>
   <script>
     $(document).ready(function(){
+      /*表单填充*/
       $.each($("div.input-group input"), function(index, input){
         $(input).val($(input).attr("placeholder"));
       });
@@ -62,8 +78,8 @@
         updatePageWithXml(mapredSite, function(){
           configForm.append($("<h2>hbase-site.xml</h2>"));
           updatePageWithXml(hbaseSite, function(){
-            configForm.append($('<div style="margin-top: 10px; text-align: center">' +
-                '<button style="width: 100px" type="submit">执行</button>'));
+            $('<div style="margin-top: 10px; text-align: center">' +
+              '<button style="width: 100px" type="submit">执行</button>').insertAfter("#userinput");
           });
         });
       });
