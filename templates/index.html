@@ -20,11 +20,11 @@
 <body>
 
 <div class="row">
-  <div  class="col-lg-4 col-lg-offset-1">
+  <div class="col-lg-6 col-lg-offset-1" style="margin-top: 50px">
   <p>
-    使用说明：先修改 merge.xml, 点击确定键, 之后会显示 core-site, mapred-site, hbase-site 的配置
-    <br/> 这时就不能修改 core-site, mapred-site, hbase-site 的值了
-    <br/> 按照需求修改完所有配置之后，点击执行
+    <strong>使用说明：</strong>先修改 merge.xml, 点击"确定", 之后会显示 core-site, mapred-site, hbase-site 的配置
+    <br/> 这时就不能修改 core-site, mapred-site, hbase-site 的值了。 如果想修改, 刷新页面重来。
+    <br/> 修改那些不符合要求的配置项（一般不用改），点击"执行"
   </p>
   </div>
 </div>
@@ -39,7 +39,9 @@
       </div>
     {% endfor %}
   </form>
-  <button value="确定" onclick="get_config()">确定</button>
+  <div style="text-align: center">
+    <button id='confirm' value="确定" onclick="get_config()">确定</button>
+  </div>
   <script>
     $(document).ready(function(){
       $.each($("div.input-group input"), function(index, input){
@@ -60,13 +62,15 @@
         updatePageWithXml(mapredSite, function(){
           configForm.append($("<h2>hbase-site.xml</h2>"));
           updatePageWithXml(hbaseSite, function(){
-            configForm.append($("<button type='submit'>RUN</button>"));
+            configForm.append($('<div style="margin-top: 10px; text-align: center">' +
+                '<button style="width: 100px" type="submit">执行</button>'));
           });
         });
       });
       coreSiteInput.attr('readonly', true);
       mapredSiteInput.attr('readonly', true);
       hbaseSiteInput.attr('readonly', true);
+      $("#confirm").remove();
 
       function updatePageWithXml(filepath, callback) {
         $.getJSON('/config/' + filepath, {
