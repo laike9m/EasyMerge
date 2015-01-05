@@ -2,6 +2,7 @@
 
 import os
 import logging
+import json
 from logging.handlers import RotatingFileHandler
 from subprocess import Popen, PIPE
 from flask import Flask, render_template, request, redirect, url_for, jsonify
@@ -10,6 +11,7 @@ from celery import Celery
 import arrow
 import pika
 from utils import get_config, update_config
+from settings import merge_json_dir, MERGEJSON_NOT_EXIST_ERR, OUTPUT, QUIT
 import traceback
 
 
@@ -39,25 +41,39 @@ def show_config(filepath):
 
 @app.route('/task/<string:task_id>')
 def task(task_id):
-    channel = connection_keeper[task_id].channel()
-    print(request.path)
-    if request.args.get('fetch', ''):
-        method_frame, header_frame, body = channel.basic_get(task_id)
-        if method_frame:
-            channel.basic_ack(method_frame.delivery_tag)
-            if body == "quit":
-                print("task finish")
-                connection_keeper[task_id].close()
-                del connection_keeper[task_id]
-            print method_frame, header_frame, body
-            return jsonify(result=body)
+    try:
+        channel = connection_keeper[task_id].channel()
+        print(request.path)
+        if request.args.get('fetch', ''):
+            method_frame, header_frame, body = channel.basic_get(task_id)
+            if method_frame:
+                print(body)
+                body = json.loads(body)
+                channel.basic_ack(method_frame.delivery_tag)
+                if body['type'] == OUTPUT:
+                    return jsonify(result=body['content'])
+                elif body['type'] == QUIT:
+                    app.logger.info("task finish")
+                    connection_keeper[task_id].close()
+                    del connection_keeper[task_id]
+                    return jsonify(result="quit")
+                elif body['type'] == MERGEJSON_NOT_EXIST_ERR:
+                    app.logger.warning("merge_json_not_exist")
+                    connection_keeper[task_id].close()
+                    del connection_keeper[task_id]
+                    return jsonify(request="merge_json_not_exist", file=body['content'])
+                else:
+                    app.logger.error("wrong type", body)
+                    return "err"
+            else:
+                print 'No message returned'
+                return jsonify(request='')
         else:
-            print 'No message returned'
-            return jsonify(request='')
-    else:
-        resp = make_response(render_template('task.html'))
-        resp.set_cookie('task_id', task_id)
-        return resp
+            resp = make_response(render_template('task.html'))
+            resp.set_cookie('task_id', task_id)
+            return resp
+    except Exception as e:
+        traceback.print_exc()
 
 
 @app.route('/new_mr_task/', methods=['POST'])
@@ -118,6 +134,16 @@ def init_mr_task(self, channel, merge_json):
     print("merge-json:", merge_json)
     conn = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
     task_channel = conn.channel()
+
+    if not os.path.exists(os.path.join(merge_json_dir, merge_json)):
+        task_channel.basic_publish(
+            exchange='',
+            routing_key=self.request.id,
+            body=json.dumps({"type": MERGEJSON_NOT_EXIST_ERR, "content": merge_json})
+        )
+        conn.close()
+        return
+
     if os.path.exists('ada-merge/celery-mr-task.sh'):
         proc = Popen(['ada-merge/celery-mr-task.sh'], shell=True, stdout=PIPE)
     else:
@@ -129,13 +155,13 @@ def init_mr_task(self, channel, merge_json):
             task_channel.basic_publish(
                 exchange='',
                 routing_key=self.request.id,
-                body=line
+                body=json.dumps({"type": OUTPUT, "content": line})
             )
         else:
             task_channel.basic_publish(
                 exchange='',
                 routing_key=self.request.id,
-                body="quit"
+                body=json.dumps({"type": QUIT})
             )
             break
     proc.communicate()

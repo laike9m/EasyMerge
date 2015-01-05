@@ -9,24 +9,38 @@
   <script type="text/javascript" src="{{ url_for('static', filename='js/utils.js') }}"></script>
 </head>
 <body>
-<script type=text/javascript>
-  var task_id = $.cookie("task_id");
-  var intervalObj = setInterval(function(){
-    $(function() {
-      $.getJSON('/task/' + task_id + '?fetch=true', {
-      }, function(data) {
-        if (data.result == "quit") {
-          console.log("task complete");
-          $("#result").append("<br/><br />" + "Task complete");
-          clearInterval(intervalObj);
-        } else if (data.result) {  // 如果没有新输出, result is undefined
-          $("#result").append("<br/>" + insertLink(data.result));
-        }
-        window.scrollTo(0, document.body.scrollHeight);
-      });
+<p id="result"></p>
+  <script type=text/javascript>
+    $(document).ready(function(){
+      var task_id = $.cookie("task_id");
+      var resultElem = $("#result");
+      var intervalObj = setInterval(function(){
+        $(function() {
+          $.getJSON('/task/' + task_id + '?fetch=true', {
+          }, function(data) {
+            switch (data.request) {
+              case "quit":
+                resultElem.append("<br/><br />" + "Task complete");
+                clearInterval(intervalObj);
+                break;
+              case "merge_json_not_exist":
+                console.log("not exist");
+                resultElem.append("<br/><br />" + data.file +
+                  " doesn't found in" + "/home/ada/cyx/entitymerge, task failed");
+                clearInterval(intervalObj);
+                break;
+              case undefined: // 如果没有新输出, result is undefined
+                clearInterval(intervalObj);
+                break;
+              default:
+                console.log(data);
+                $("#result").append("<br/>" + insertLink(data.result));
+            }
+            window.scrollTo(0, document.body.scrollHeight);
+          });
+        });
+      }, 200);
     });
-  }, 200);
-</script>
- <p id=result></p>
+  </script>
 </body>
 </html>
