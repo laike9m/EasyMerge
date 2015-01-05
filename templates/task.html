@@ -18,10 +18,11 @@
         $(function() {
           $.getJSON('/task/' + task_id + '?fetch=true', {
           }, function(data) {
-            switch (data.request) {
+            switch (data.content) {
               case "quit":
                 resultElem.append("<br/><br />" + "Task complete");
                 clearInterval(intervalObj);
+                alert("task complete!");
                 break;
               case "merge_json_not_exist":
                 console.log("not exist");
@@ -30,11 +31,10 @@
                 clearInterval(intervalObj);
                 break;
               case undefined: // 如果没有新输出, result is undefined
-                clearInterval(intervalObj);
                 break;
               default:
                 console.log(data);
-                $("#result").append("<br/>" + insertLink(data.result));
+                $("#result").append("<br/>" + insertLink(data.content));
             }
             window.scrollTo(0, document.body.scrollHeight);
           });
