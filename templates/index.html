@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+  <script src="http://malsup.github.com/jquery.form.js"></script>
 </head>
 
 <body>
@@ -34,7 +35,7 @@
 </div>
 <div class="container">
 
-  <form action="/config/" method="Post" target="_blank">
+  <form method="Post" id="config_input">
     <div id="config">
       <h2>merge.xml</h2>
       {% for k, v in config.iteritems() %}
@@ -53,23 +54,60 @@
       {% endfor %}
       <div class="input-group">
         <span class="input-group-addon">merge-json</span>
-        <!--仅有这两个配置的placeholder是写死的-->
-        <input name="merge-json" type="text" class="form-control">
+        <!--仅有这两个配置的是必须填写的-->
+        <input name="merge-json" type="text" class="form-control" placeholder="">
       </div>
       <div class="input-group">
         <span class="input-group-addon">gdb-json</span>
-        <input name="gdb-json" type="text" class="form-control">
+        <input name="gdb-json" type="text" class="form-control" placeholder="">
       </div>
     </div>
   </form>
   <div style="text-align: center">
-    <button id='confirm' value="确定" onclick="get_config()">确定</button>
+    <button id='confirm' value="确定" onclick="get_config()" style="margin: 10px">
+      确定
+    </button>
   </div>
+  <form method="Post" action="/new_mr_task/" target="_blank">
+    <div class="input-group">
+      <span class="input-group-addon">task1</span>
+      <input name='1' id="task1" class="form-control" placeholder="task1 command" readonly>
+      <span class="input-group-btn">
+        <button type="submit" class="btn btn-default">执行</button>
+      </span>
+    </div>
+  </form>
+  <form method="Post" action="/new_mr_task/" target="_blank">
+    <div class="input-group">
+      <span class="input-group-addon">task1</span>
+      <input name='2' id="task2" class="form-control" placeholder="task1 command" readonly>
+      <span class="input-group-btn">
+        <button type="submit" class="btn btn-default">执行</button>
+      </span>
+    </div>
+  </form>
+  <form method="Post" action="/new_mr_task/" target="_blank">
+    <div class="input-group">
+      <span class="input-group-addon">task1</span>
+      <input name='3' id="task3" class="form-control" placeholder="task1 command" readonly>
+      <span class="input-group-btn">
+        <button type="submit" class="btn btn-default">执行</button>
+      </span>
+    </div>
+  </form>
   <script>
     $(document).ready(function(){
-      /*表单填充*/
+      /* 表单填充 */
       $.each($("div.input-group input"), function(index, input){
         $(input).val($(input).attr("placeholder"));
+      });
+      /* form提交后获取mr command */
+      $("#config_input").ajaxForm({
+        url : 'http://127.0.0.1:5000/config/',  // need prefix
+        dataType : 'json',
+        success : function (response) {
+          console.log(response);
+        }
       });
     });
     function get_config(){
@@ -86,8 +124,9 @@
         updatePageWithXml(mapredSite, function(){
           configForm.append($("<h2>hbase-site.xml</h2>"));
           updatePageWithXml(hbaseSite, function(){
-            $('<div style="margin-top: 10px; text-align: center">' +
-              '<button style="width: 100px" type="submit">更新配置</button>').insertAfter("#userinput");
+            $('<div style="margin: 10px; text-align: center">' +
+              '<button style="width: 100px" type="submit">更新配置</button>')
+              .insertAfter("#userinput");
           });
         });
       });
@@ -114,6 +153,7 @@
         });
       }
     }
+
   </script>
 </div>
 
