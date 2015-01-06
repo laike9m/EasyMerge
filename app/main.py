@@ -10,9 +10,10 @@ from flask import send_from_directory, make_response
 from celery import Celery
 import arrow
 import pika
-from utils import get_config, update_config
+from utils import get_config, update_config, update_and_fetch_mrtask_script
 from settings import merge_json_dir, MERGEJSON_NOT_EXIST_ERR, OUTPUT, QUIT, debug
 import traceback
+from pprint import pprint
 
 
 file_abspath = os.path.abspath(__file__)
@@ -34,9 +35,26 @@ def index():
     return render_template('index.html', config=config)
 
 
-@app.route('/config/<path:filepath>')
-def show_config(filepath):
-    return jsonify(**get_config(filepath))
+@app.route('/config/', methods=['GET', 'POST'], defaults={'filepath': ''})
+@app.route('/config/<path:filepath>', methods=['GET', 'POST'])
+def read_or_write_config(filepath):
+    """
+    GET: 读取配置文件并在页面显示
+    POST: 更新配置文件, 返回依照页面上填写信息生成的shell命令
+    """
+    if request.method == 'GET':
+        return jsonify(**get_config(filepath))
+    if request.method == 'POST':
+        configs = {t[0]: t[1] for t in request.form.items()}
+        configs["channel"] = request.form.getlist("channel")
+        pprint(configs)
+
+        update_config('merge.xml', configs)
+        update_config(configs['core-site'], configs)
+        update_config(configs['mapred-site'], configs)
+        update_config(configs['hbase-site'], configs)
+
+        return jsonify(update_and_fetch_mrtask_script(configs))
 
 
 @app.route('/task/<string:task_id>')
@@ -77,14 +95,6 @@ def task(task_id):
 
 @app.route('/new_mr_task/', methods=['POST'])
 def init_mr_task():
-    from pprint import pprint
-    configs = {t[0]: t[1] for t in request.form.items()}
-    update_config('merge.xml', configs)
-    update_config(configs['core-site'], configs)
-    update_config(configs['mapred-site'], configs)
-    update_config(configs['hbase-site'], configs)
-    channels = request.form.getlist("channel")
-    merge_json = configs.get("merge-json")
 
     new_task_id = str(arrow.utcnow().timestamp)
     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
