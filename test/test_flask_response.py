@@ -61,7 +61,7 @@ class FlaskTest(TestCase):
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
                          "ict.ada.merge.dump.DumpJob -libjars $libs -files data"
                          " -conf merge.xml baidubaike,wikibaike,web,news,bbs,"
-                         "weibo,hudongbaike /tmp/merge-json",
+                         "weibo,hudongbaike /tmp/gdb-json",
                          resp_data['task3'].strip())
 
         resp = requests.post(
@@ -97,7 +97,7 @@ class FlaskTest(TestCase):
                 "mapred-site": "conf/mapred-site-35.xml",
                 "hbase-site": "conf/hbase-site-35.xml",
                 "merge-json": "/tmp/sname-merge",
-                "gdb-json": "/tmp/merge-json",
+                "gdb-json": "/tmp/gdb-json",
                 "channel": ["baidubaike","wikibaike","web","news","bbs",
                             "weibo","hudongbaike"],
             }

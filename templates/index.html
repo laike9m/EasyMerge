@@ -29,6 +29,7 @@
     <br/> 修改那些不符合要求的配置项（一般不用改），点击"执行"
     <br> <strong> 参数说明</strong>
     <br> merge-json: 输入的json文件, 代表了要融合的点, 应该存放在36的 /home/ada/cyx/entitymerge
+    <br> 之后会把这个文件放到HDFS上的 /tmp/sname-merge/YY-MM-DD/ 文件夹中
     <br> gdb-json: 实体融合输出json, 这个路径表示输出文件在 HDFS 的存放路径
   </p>
   </div>
@@ -74,6 +75,7 @@
       <input name='1' id="task1" class="form-control" placeholder="task1 command" readonly>
       <span class="input-group-btn">
         <button type="submit" class="btn btn-default" disabled>执行</button>
+        <input name="merge-json" id="hidden-merge-json" class="form-control" style="display: none">
       </span>
     </div>
   </form>
@@ -90,6 +92,7 @@
     <div class="input-group">
       <span class="input-group-addon">task1</span>
       <input name='3' id="task3" class="form-control" placeholder="task2 command" readonly>
+      <input name="gdb-json" id="hidden-gdb-json" class="form-control" style="display: none">
       <span class="input-group-btn">
         <button type="submit" class="btn btn-default" disabled>执行</button>
       </span>
@@ -113,6 +116,8 @@
           $("#task1").val(response.task1);
           $("#task2").val(response.task2);
           $("#task3").val(response.task3);
+          $("#hidden-merge-json").val(response.task1.split(' ').pop());
+          $("#hidden-gdb-json").val(response.task3.split(' ').pop());
           $(".btn-default").attr("disabled", false);
         }
       });

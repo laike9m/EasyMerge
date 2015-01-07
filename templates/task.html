@@ -12,11 +12,11 @@
 <p id="result"></p>
   <script type=text/javascript>
     $(document).ready(function(){
-      var task_id = $.cookie("task_id");
+      var celery_task_id = $.cookie("celery_task_id");
       var resultElem = $("#result");
       var intervalObj = setInterval(function(){
         $(function() {
-          $.getJSON('/task/' + task_id + '?fetch=true', {
+          $.getJSON('/task/' + celery_task_id + '?fetch=true', {
           }, function(data) {
             switch (data.content) {
               case "quit":
