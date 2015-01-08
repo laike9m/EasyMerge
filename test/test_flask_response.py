@@ -52,15 +52,15 @@ class FlaskTest(TestCase):
         resp_data = resp.json()
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar"
                          " ict.ada.merge.loader.MergeJsonLoader -libjars"
-                         " $libs -conf merge.xml /tmp/sname-merge",
+                         " $libs -conf merge.xml 2>&1 /tmp/sname-merge",
                          resp_data['task1'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
                          "ict.ada.merge.newid.MinIDJob -libjars $libs -conf "
-                         "merge.xml merge-config.json",
+                         "merge.xml 2>&1 merge-config.json",
                          resp_data['task2'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
                          "ict.ada.merge.dump.DumpJob -libjars $libs -files data"
-                         " -conf merge.xml baidubaike,wikibaike,web,news,bbs,"
+                         " -conf merge.xml 2>&1 baidubaike,wikibaike,web,news,bbs,"
                          "weibo,hudongbaike /tmp/gdb-json",
                          resp_data['task3'].strip())
 
@@ -78,15 +78,15 @@ class FlaskTest(TestCase):
         resp_data = resp.json()
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar"
                          " ict.ada.merge.loader.MergeJsonLoader -libjars"
-                         " $libs -conf merge.xml test_merge.json",
+                         " $libs -conf merge.xml 2>&1 test_merge.json",
                          resp_data['task1'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
                          "ict.ada.merge.newid.MinIDJob -libjars $libs -conf "
-                         "merge.xml merge-config.json",
+                         "merge.xml 2>&1 merge-config.json",
                          resp_data['task2'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
                          "ict.ada.merge.dump.DumpJob -libjars $libs -files data"
-                         " -conf merge.xml bbs,web test_gdb.json",
+                         " -conf merge.xml 2>&1 bbs,web test_gdb.json",
                          resp_data['task3'].strip())
 
     def test_write_mrtask_script(self):
