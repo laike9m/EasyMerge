@@ -11,7 +11,7 @@ from celery import Celery
 import arrow
 import pika
 from utils import get_config, update_config, update_and_fetch_mrtask_script
-from settings import merge_json_dir, MERGEJSON_NOT_EXIST_ERR, OUTPUT, QUIT, \
+from settings import MERGE_JSON_DIR, MERGEJSON_NOT_EXIST_ERR, OUTPUT, QUIT, \
     debug, MR_TASK
 import traceback
 from pprint import pprint
@@ -157,22 +157,81 @@ def init_mr_task(self, script_location, merge_json=None, gdb_json=None):
 
     print(script_location, merge_json, gdb_json)
 
-    '''
-    if not debug:
-        if not os.path.exists(os.path.join(merge_json_dir, merge_json)):
-            task_channel.basic_publish(
-                exchange='',
-                routing_key=self.request.id,
-                body=json.dumps({"type": MERGEJSON_NOT_EXIST_ERR, "content": merge_json})
-            )
-            conn.close()
-            return
-    '''
-
-    if os.path.exists('ada-merge/celery-mr-task.sh'):
-        proc = Popen(['ada-merge/celery-mr-task.sh'], shell=True, stdout=PIPE)
-    else:
+    if debug:
         proc = Popen(['app/sample.sh'], shell=True, stdout=PIPE)
+        while True:
+            line = proc.stdout.readline()
+            print line
+            if line:
+                task_channel.basic_publish(
+                    exchange='',
+                    routing_key=self.request.id,
+                    body=json.dumps({"type": OUTPUT, "content": line})
+                )
+            else:
+                task_channel.basic_publish(
+                    exchange='',
+                    routing_key=self.request.id,
+                    body=json.dumps({"type": QUIT})
+                )
+                break
+        proc.communicate()
+        conn.close()
+        return
+
+    # check input file/folder existence
+
+    if not os.path.exists(os.path.join(MERGE_JSON_DIR, merge_json)):
+        task_channel.basic_publish(
+            exchange='',
+            routing_key=self.request.id,
+            body=json.dumps({"type": MERGEJSON_NOT_EXIST_ERR, "content": merge_json})
+        )
+        conn.close()
+        return
+
+    # HDFS operations
+
+    if merge_json:
+        """说明是task1, 需要先把 merge_json 放到HDFS 的相应位置
+        """
+        date = arrow.now().format("YYMMDD")
+        proc = Popen(
+            "hadoop fs -rmr /tmp/sname-merge/%s/%s 2>&1" % (date, merge_json),
+            stdout=PIPE
+        )
+        stdout1, _ = proc.communicate()
+
+        # will cause timeout putting to fs without trailing slash
+        merge_json = merge_json+'/' if os.path.isdir(merge_json) else merge_json
+        merge_json_abspath = os.path.join(MERGE_JSON_DIR, merge_json)
+        proc = Popen(
+            "hadoop fs -copyFromLocal %s /tmp/sname-merge/%s/%s 2>&1" %
+                (merge_json_abspath, date, merge_json),
+            stdout=PIPE
+        )
+        stdout2, _ = proc.communicate()
+
+        task_channel.basic_publish(
+            exchange='',
+            routing_key=self.request.id,
+            body=json.dumps({"type": OUTPUT, "content": stdout1+'\n'+stdout2})
+        )
+
+    if gdb_json:
+        """task3, 要先把HDFS 上作为输出路径的文件夹删除掉
+        """
+        proc = Popen("hadoop fs -rmr %s 2>&1" % gdb_json, stdout=PIPE)
+        stdout2, _ = proc.communicate()
+        task_channel.basic_publish(
+            exchange='',
+            routing_key=self.request.id,
+            body=json.dumps({"type": OUTPUT, "content": stdout2})
+        )
+
+    # execute mapreduce task
+
+    proc = Popen(script_location, shell=True, stdout=PIPE)
     while proc.returncode is None:  # running
         line = proc.stdout.readline()
         print line
