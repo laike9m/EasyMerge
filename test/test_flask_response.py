@@ -8,23 +8,25 @@ from unittest import TestCase
 from os.path import dirname, abspath, join
 import shutil
 from os import remove
+import arrow
+from app.settings import *
 
 
 class FlaskTest(TestCase):
 
     ada_merge_dir = abspath(join(dirname(dirname(__file__)), 'ada-merge'))
+    date = FROZEN_TIME
+    get_hdfs_path = lambda _, path: MERGE_JSON_HDFS_DIR+FROZEN_TIME+'/'+path
     root_url = 'http://127.0.0.1:5000'
     task_script1 = join(ada_merge_dir, 'celery-mr-task1.sh')
     task_script2 = join(ada_merge_dir, 'celery-mr-task2.sh')
     task_script3 = join(ada_merge_dir, 'celery-mr-task3.sh')
 
+    # 如果有多个test method, setUp 和 tearDown 真的每次都会被调用, 而且不同 testmethod
+    # 是独立的 instance, 这一点有待研究
+
     def setUp(self):
-        with open(self.task_script1) as t1:
-            self.t1_content = t1.read()
-        with open(self.task_script2) as t2:
-            self.t2_content = t2.read()
-        with open(self.task_script3) as t3:
-            self.t3_content = t3.read()
+        print("setUp called")
         shutil.copy(self.task_script1, self.task_script1+'.bak')
         shutil.copy(self.task_script2, self.task_script2+'.bak')
         shutil.copy(self.task_script3, self.task_script3+'.bak')
@@ -44,15 +46,16 @@ class FlaskTest(TestCase):
                 "core-site": "conf/core-site-35.xml",
                 "mapred-site": "conf/mapred-site-35.xml",
                 "hbase-site": "conf/hbase-site-35.xml",
-                "merge-json": "",
-                "gdb-json": "",
-                "channel": [],
+                "merge-json": "merge-json",
+                "gdb-json": "gdb-json",
+                "channel": ["bbs", "web"],
             }
         )
         resp_data = resp.json()
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar"
                          " ict.ada.merge.loader.MergeJsonLoader -libjars"
-                         " $libs -conf merge.xml 2>&1 /tmp/sname-merge",
+                         " $libs -conf merge.xml 2>&1 " +
+                         self.get_hdfs_path("merge-json"),
                          resp_data['task1'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
                          "ict.ada.merge.newid.MinIDJob -libjars $libs -conf "
@@ -60,8 +63,7 @@ class FlaskTest(TestCase):
                          resp_data['task2'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
                          "ict.ada.merge.dump.DumpJob -libjars $libs -files data"
-                         " -conf merge.xml 2>&1 baidubaike,wikibaike,web,news,bbs,"
-                         "weibo,hudongbaike /tmp/gdb-json",
+                         " -conf merge.xml 2>&1 bbs,web gdb-json",
                          resp_data['task3'].strip())
 
         resp = requests.post(
@@ -70,15 +72,16 @@ class FlaskTest(TestCase):
                 "core-site": "conf/core-site-35.xml",
                 "mapred-site": "conf/mapred-site-35.xml",
                 "hbase-site": "conf/hbase-site-35.xml",
-                "merge-json": "test_merge.json",
-                "gdb-json": "test_gdb.json",
-                "channel": ["bbs", "web"],
+                "merge-json": "",
+                "gdb-json": "",
+                "channel": []
             }
         )
         resp_data = resp.json()
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar"
                          " ict.ada.merge.loader.MergeJsonLoader -libjars"
-                         " $libs -conf merge.xml 2>&1 test_merge.json",
+                         " $libs -conf merge.xml 2>&1 " +
+                         self.get_hdfs_path("merge-json"),
                          resp_data['task1'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
                          "ict.ada.merge.newid.MinIDJob -libjars $libs -conf "
@@ -86,25 +89,5 @@ class FlaskTest(TestCase):
                          resp_data['task2'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
                          "ict.ada.merge.dump.DumpJob -libjars $libs -files data"
-                         " -conf merge.xml 2>&1 bbs,web test_gdb.json",
+                         " -conf merge.xml 2>&1 bbs,web gdb-json",
                          resp_data['task3'].strip())
-
-    def test_write_mrtask_script(self):
-        requests.post(
-            url=self.root_url + '/config/',
-            data={
-                "core-site": "conf/core-site-35.xml",
-                "mapred-site": "conf/mapred-site-35.xml",
-                "hbase-site": "conf/hbase-site-35.xml",
-                "merge-json": "/tmp/sname-merge",
-                "gdb-json": "/tmp/gdb-json",
-                "channel": ["baidubaike","wikibaike","web","news","bbs",
-                            "weibo","hudongbaike"],
-            }
-        )
-        with open(join(self.ada_merge_dir, 'celery-mr-task1.sh')) as t1:
-            self.assertEqual(t1.read(), self.t1_content)
-        with open(join(self.ada_merge_dir, 'celery-mr-task2.sh')) as t2:
-            self.assertEqual(t2.read(), self.t2_content)
-        with open(join(self.ada_merge_dir, 'celery-mr-task3.sh')) as t3:
-            self.assertEqual(t3.read(), self.t3_content)

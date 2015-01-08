@@ -4,6 +4,13 @@ from subprocess import Popen, PIPE
 from collections import OrderedDict
 from os.path import dirname, abspath, join
 from itertools import ifilterfalse
+import arrow
+from freezegun import freeze_time
+from settings import *
+
+freezer = freeze_time(FROZEN_TIME)
+if debug:
+    freezer.start()
 
 ada_merge_dir = abspath(join(dirname(dirname(__file__)), 'ada-merge'))
 
@@ -32,7 +39,6 @@ def get_config(filepath):
 
 @use_real_path
 def update_config(filepath, configs):
-    print(filepath)
     config_xml_tree = ET.parse(filepath)
     root = config_xml_tree.getroot()
 
@@ -43,6 +49,27 @@ def update_config(filepath, configs):
 
     ET.ElementTree(root).write(filepath)
 
+def get_mergejson_path_on_hdfs(merge_json, date=None):
+    """
+    :date 测试用
+    :merge_json 相对 MERGE_JSON_DIR 的路径
+    :return merge-json 在 HDFS 上的路径
+    """
+    date = arrow.now().format("YYMMDD") if date is None else date
+    merge_json = merge_json.lstrip('/')
+    return join(MERGE_JSON_HDFS_DIR, date, merge_json)
+
+def get_mergejson_relative_path(mergejson_path_on_hdfs):
+    """
+    获取merge本地路径, relative to MERGE_JSON_DIR
+    """
+    import re
+    date = re.compile(r".*([0-9]{6}/)")
+    match_obj = date.match(mergejson_path_on_hdfs)
+    if match_obj:
+        return mergejson_path_on_hdfs[match_obj.end():]
+    else:
+        return None
 
 def update_and_fetch_mrtask_script(configs):
     """
@@ -50,16 +77,13 @@ def update_and_fetch_mrtask_script(configs):
     task2, 没有需要更新的部分
     task3, 最后两部分需要更新, 通道, 输出路径
     """
-    with open(join(ada_merge_dir, 'celery-mr-task1.sh'), 'r+') as t1:
-        with open(join(ada_merge_dir, 'celery-mr-task2.sh'), 'r+') as t2:
-            with open(join(ada_merge_dir, 'celery-mr-task3.sh'), 'r+') as t3:
+    with open(join(ada_merge_dir, 'celery-mr-task1.sh'), 'r') as t1:
+        with open(join(ada_merge_dir, 'celery-mr-task2.sh'), 'r') as t2:
+            with open(join(ada_merge_dir, 'celery-mr-task3.sh'), 'r') as t3:
                 # 记录行号, 方便之后写入
                 t1_content = [l for l in t1.readlines() if not l.isspace()]
                 t2_content = [l for l in t2.readlines() if not l.isspace()]
                 t3_content = [l for l in t3.readlines() if not l.isspace()]
-                t1.seek(0, 0)
-                t2.seek(0, 0)
-                t3.seek(0, 0)
                 lineno1, task1_command = filter(
                     lambda x: x[1].startswith("hadoop"),
                     enumerate(t1_content)
@@ -73,9 +97,13 @@ def update_and_fetch_mrtask_script(configs):
                     enumerate(t3_content)
                 )[0]
 
+
+    with open(join(ada_merge_dir, 'celery-mr-task1.sh'), 'w') as t1:
+        with open(join(ada_merge_dir, 'celery-mr-task2.sh'), 'w') as t2:
+            with open(join(ada_merge_dir, 'celery-mr-task3.sh'), 'w') as t3:
                 # merge-json could be '', if so, don't update task1 script
                 if configs["merge-json"]:
-                    merge_json = configs["merge-json"]
+                    merge_json = get_mergejson_path_on_hdfs(configs["merge-json"])
                     task1_command = task1_command.split()[:-1]
                     task1_command.append(merge_json)
                     task1_command = ' '.join(task1_command)
