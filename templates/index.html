@@ -109,7 +109,7 @@
       });
       /* form提交后获取mr command */
       $("#config_input").ajaxForm({
-        url : 'http://127.0.0.1:5000/config/',  // need prefix
+        url : document.URL + '/config/',  // need prefix
         dataType : 'json',
         success : function (response) {
           console.log(response);
