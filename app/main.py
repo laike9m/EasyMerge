@@ -197,7 +197,8 @@ def init_mr_task(self, script_location, merge_json=None, gdb_json=None):
             conn.close()
             return
 
-        proc = Popen("hadoop fs -rmr %s 2>&1" % merge_json, stdout=PIPE)
+        proc = Popen("hadoop fs -rmr %s 2>&1" % merge_json, shell=True,
+                     stdout=PIPE)
         stdout1, _ = proc.communicate()
 
         # will cause timeout putting to fs without trailing slash
@@ -205,6 +206,7 @@ def init_mr_task(self, script_location, merge_json=None, gdb_json=None):
             if os.path.isdir(merge_json_localpath) else merge_json_localpath
         proc = Popen(
             "hadoop fs -copyFromLocal %s %s 2>&1" % (merge_json_localpath, merge_json),
+            shell=True,
             stdout=PIPE
         )
         stdout2, _ = proc.communicate()
@@ -218,7 +220,8 @@ def init_mr_task(self, script_location, merge_json=None, gdb_json=None):
     if gdb_json:
         """task3, 要先把 HDFS 上作为输出路径的文件夹删除掉
         """
-        proc = Popen("hadoop fs -rmr %s 2>&1" % gdb_json, stdout=PIPE)
+        proc = Popen("hadoop fs -rmr %s 2>&1" % gdb_json, shell=True,
+                     stdout=PIPE)
         stdout2, _ = proc.communicate()
         task_channel.basic_publish(
             exchange='',
