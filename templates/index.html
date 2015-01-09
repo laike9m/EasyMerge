@@ -81,7 +81,7 @@
   </form>
   <form method="Post" action="/new_mr_task/" target="_blank">
     <div class="input-group">
-      <span class="input-group-addon">task1</span>
+      <span class="input-group-addon">task2</span>
       <input name='2' id="task2" class="form-control" placeholder="task2 command" readonly>
       <span class="input-group-btn">
         <button type="submit" class="btn btn-default" disabled>执行</button>
@@ -90,7 +90,7 @@
   </form>
   <form method="Post" action="/new_mr_task/" target="_blank">
     <div class="input-group">
-      <span class="input-group-addon">task1</span>
+      <span class="input-group-addon">task3</span>
       <input name='3' id="task3" class="form-control" placeholder="task2 command" readonly>
       <input name="gdb-json" id="hidden-gdb-json" class="form-control" style="display: none">
       <span class="input-group-btn">
@@ -109,8 +109,12 @@
         $(input).val($(input).attr("placeholder"));
       });
       /* form提交后获取mr command */
+      var url = document.URL;
+      if (url.charAt(url.length-1) === '/') {
+        url = url.slice(0, url.length - 1);  // remvoe trailing slash
+      }
       $("#config_input").ajaxForm({
-        url : document.URL + '/config/',  // need prefix
+        url : url + '/config/',  // need prefix
         dataType : 'json',
         success : function (response) {
           console.log(response);

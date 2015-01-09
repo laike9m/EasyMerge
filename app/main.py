@@ -61,8 +61,8 @@ def read_or_write_config(filepath):
 def init_mr_task():
     print(request.form.items())
     tuple_list = request.form.items()
-    mr_task_id = tuple_list[0][0]
-    script_location = MR_TASK[mr_task_id]
+    mr_task_type = tuple_list[0][0]
+    script_location = MR_TASK[mr_task_type]
     kwargs = {}
     if len(tuple_list) > 1:
         json_file_type, json_file_path = tuple_list[1]
@@ -81,7 +81,7 @@ def init_mr_task():
     # 否则会出现无法在connection_keeper中找到new_celery_task_id这一项的问题, 原因未知
     init_mr_task.apply_async((script_location,), kwargs=kwargs,
                              task_id=new_celery_task_id)
-    return redirect('/task/%s' % new_celery_task_id)
+    return redirect('/task/%s?mr_task_type=%s' % (new_celery_task_id, mr_task_type))
 
 
 @app.route('/task/<string:celery_task_id>')
@@ -91,7 +91,11 @@ def task(celery_task_id):
         if request.args.get('fetch', ''):
             method_frame, header_frame, body = channel.basic_get(celery_task_id)
             if method_frame:
-                body = json.loads(body)
+                try:
+                    body = json.loads(body)
+                except ValueError:
+                    app.logger.error("json decode error: ", body)
+                    return jsonify(request='')
                 channel.basic_ack(method_frame.delivery_tag)
                 if body['type'] == OUTPUT:
                     return jsonify(content=body['content'])
@@ -109,10 +113,10 @@ def task(celery_task_id):
                     app.logger.error("wrong type", body)
                     return "err"
             else:
-                print 'No message returned'
                 return jsonify(request='')
         else:
-            resp = make_response(render_template('task.html'))
+            mr_task_type = request.args.get("mr_task_type")
+            resp = make_response(render_template('task.html', mr_task_type=mr_task_type))
             resp.set_cookie('celery_task_id', celery_task_id)
             return resp
     except Exception as e:
