@@ -11,7 +11,7 @@ from celery import Celery
 import arrow
 import pika
 from utils import get_config, update_config, get_mergejson_path_on_hdfs,\
-    update_and_fetch_mrtask_script
+    update_and_fetch_mrtask_script, get_mergejson_relative_path
 from settings import *
 import traceback
 from pprint import pprint
@@ -182,14 +182,17 @@ def init_mr_task(self, script_location, merge_json=None, gdb_json=None):
         """task1, 需要先把 merge_json 放到HDFS 的相应位置
         """
         # check input file/folder existence
-        merge_json_localpath = os.path.join(MERGE_JSON_DIR,
-                                            os.path.basename(merge_json))
+        merge_json_localpath = os.path.join(
+            MERGE_JSON_DIR, get_mergejson_relative_path(merge_json))
+
         if not os.path.exists(merge_json_localpath):
             task_channel.basic_publish(
                 exchange='',
                 routing_key=self.request.id,
-                body=json.dumps({"type": MERGEJSON_NOT_EXIST_ERR,
-                                 "content": merge_json})
+                body=json.dumps({
+                    "type": MERGEJSON_NOT_EXIST_ERR,
+                    "content": get_mergejson_relative_path(merge_json)
+                })
             )
             conn.close()
             return
