@@ -39,6 +39,10 @@ class FlaskTest(TestCase):
         remove(self.task_script2+'.bak')
         remove(self.task_script3+'.bak')
 
+    def test_set_ada_merge_dir(self):
+        resp = requests.get(self.root_url+"?ada_merge_dir=xxx")
+        self.assertIn("no merge.xml in directory: xxx", resp.text)
+
     def test_update_and_fetch_command(self):
         resp = requests.post(
             url=self.root_url + '/config/',

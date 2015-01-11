@@ -1,8 +1,10 @@
 # coding: utf-8
+import json
+import os
 import xml.etree.ElementTree as ET
 from subprocess import Popen, PIPE
 from collections import OrderedDict
-from os.path import dirname, abspath, join
+from os.path import dirname, abspath, join, exists
 from itertools import ifilterfalse
 import arrow
 from freezegun import freeze_time
@@ -12,7 +14,17 @@ freezer = freeze_time(FROZEN_TIME)
 if debug:
     freezer.start()
 
-ada_merge_dir = abspath(join(dirname(dirname(__file__)), 'ada-merge'))
+ada_merge_dir = json.load(
+    open(join(dirname(dirname(abspath(__file__))), "config.json"))
+)['ada_merge_dir']
+
+
+def set_ada_merge_dir(dirname):
+    if exists(join(dirname, 'merge.xml')):
+        global ada_merge_dir
+        ada_merge_dir = dirname
+    else:
+        raise IOError
 
 
 def use_real_path(func):

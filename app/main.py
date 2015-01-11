@@ -11,7 +11,8 @@ from celery import Celery
 import arrow
 import pika
 from utils import get_config, update_config, get_mergejson_path_on_hdfs,\
-    update_and_fetch_mrtask_script, get_mergejson_relative_path
+    update_and_fetch_mrtask_script, get_mergejson_relative_path, \
+    set_ada_merge_dir
 from settings import *
 import traceback
 from pprint import pprint
@@ -32,8 +33,17 @@ connection_keeper = {}
 
 @app.route('/')
 def index():
+    ada_merge_dir = request.args.get("ada_merge_dir")
+    if ada_merge_dir:
+        try:
+            set_ada_merge_dir(ada_merge_dir)
+        except IOError:
+            return "no merge.xml in directory: " + ada_merge_dir
+
+    ada_merge_dir_list = json.load(open("../config.json"))["ada_merge_dir_list"]
     config = get_config("merge.xml")
-    return render_template('index.html', config=config)
+    return render_template('index.html', config=config,
+                           ada_merge_dir_list=ada_merge_dir_list)
 
 
 @app.route('/config/', methods=['GET', 'POST'], defaults={'filepath': ''})
