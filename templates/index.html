@@ -135,8 +135,11 @@
       });
       /* form提交后获取mr command */
       var url = document.URL;
+      if (url.indexOf('?') !== -1) {
+        url = url.split('?')[0];
+      }
       if (url.charAt(url.length-1) === '/') {
-        url = url.slice(0, url.length - 1);  // remvoe trailing slash
+        url = url.slice(0, url.length - 1);  // remove trailing slash
       }
       $("#config_input").ajaxForm({
         url : url + '/config/',  // need prefix
