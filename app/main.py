@@ -40,10 +40,14 @@ def index():
         except IOError:
             return "no merge.xml in directory: " + ada_merge_dir
 
-    ada_merge_dir_list = json.load(open("../config.json"))["ada_merge_dir_list"]
+    json_obj = json.load(open("../config.json"))
+    ada_merge_dir_list = json_obj["ada_merge_dir_list"]
+    ada_merge_dir = json_obj["ada_merge_dir"]
     config = get_config("merge.xml")
+    print(ada_merge_dir)
     return render_template('index.html', config=config,
-                           ada_merge_dir_list=ada_merge_dir_list)
+                           ada_merge_dir_list=ada_merge_dir_list,
+                           ada_merge_dir=ada_merge_dir)
 
 
 @app.route('/config/', methods=['GET', 'POST'], defaults={'filepath': ''})

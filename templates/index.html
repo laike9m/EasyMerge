@@ -34,14 +34,28 @@
   </p>
   </div>
 </div>
-<select id="ada_merge_dir_select">
-  {% for ada_merge_dir in ada_merge_dir_list %}
-    <option value="{{ ada_merge_dir }}">{{ ada_merge_dir }}</option>
-  {% endfor %}
-</select>
+<meta id="data" data-name="{{ ada_merge_dir }}">
+<div class="row">
+  <div class="col-lg-7 col-lg-offset-1" style="margin-top: 50px">
+  <select id="ada_merge_dir_select">
+    {% for ada_merge_dir in ada_merge_dir_list %}
+      <option id="{{ ada_merge_dir }}" value="{{ ada_merge_dir }}">
+        {{ ada_merge_dir }}
+      </option>
+    {% endfor %}
+  </select>
+  </div>
+</div>
 <script>
+  var ada_merge_dir = $("#data").data()['name'];
+  console.log("ada_merge_dir:", ada_merge_dir);
+  if (ada_merge_dir.length > 1) {
+    $("#ada_merge_dir_select").val(ada_merge_dir);
+  }
   $("#ada_merge_dir_select").change(function(){
-    var selectedDir = $("select option:selected").text();
+    var selectedDir = $("select option:selected").attr('value');
+    console.log(selectedDir);
+    console.log(selectedDir.length);
     window.location.search = "?ada_merge_dir=" + encodeURIComponent(selectedDir);
   });
 </script>
