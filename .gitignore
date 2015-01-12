@@ -5,3 +5,5 @@
 ada-merge
 erl_crash.dump
 logs
+app/settings.py
+config.json
