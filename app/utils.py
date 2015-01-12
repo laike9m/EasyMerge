@@ -14,23 +14,36 @@ freezer = freeze_time(FROZEN_TIME)
 if debug:
     freezer.start()
 
+CONFIG_JSON = join(dirname(dirname(abspath(__file__))), "config.json")
+
 ada_merge_dir = json.load(
-    open(join(dirname(dirname(abspath(__file__))), "config.json"))
+    open(CONFIG_JSON)
 )['ada_merge_dir']
 
+def get_path_in_ada_merge_dir(path):
+    """输入相对路径, 返回在当前 ada_merge_dir 中的绝对路径
+    """
+    return join(ada_merge_dir, path)
 
-def set_ada_merge_dir(dirname):
-    if exists(join(dirname, 'merge.xml')):
+
+def set_ada_merge_dir(new_ada_merge_dir):
+    if exists(join(new_ada_merge_dir, 'merge.xml')):
         global ada_merge_dir
-        ada_merge_dir = dirname
+        ada_merge_dir = new_ada_merge_dir
+        config_json = json.load(open(CONFIG_JSON))
+        config_json['ada_merge_dir'] = new_ada_merge_dir
+        json.dump(config_json, open(CONFIG_JSON, 'w'), indent=4)
     else:
         raise IOError
 
 
 def use_real_path(func):
 
+    # print(ada_merge_dir)
     def new_func(path, *args):
+        global ada_merge_dir
         real_path = join(ada_merge_dir, path)
+        # print(ada_merge_dir)
         result = func(real_path, *args)
         return result
 

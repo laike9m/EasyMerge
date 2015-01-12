@@ -3,16 +3,18 @@
 launch flask serve before running tests
 """
 
-import requests
+import json
 from unittest import TestCase
 from os.path import dirname, abspath, join
 import shutil
 from os import remove
+import requests
 import arrow
 from app.settings import *
+from app.utils import set_ada_merge_dir
 
 
-class FlaskTest(TestCase):
+class MRCommandTest(TestCase):
 
     ada_merge_dir = abspath(join(dirname(dirname(__file__)), 'ada-merge'))
     date = FROZEN_TIME
@@ -26,7 +28,6 @@ class FlaskTest(TestCase):
     # 是独立的 instance, 这一点有待研究
 
     def setUp(self):
-        print("setUp called")
         shutil.copy(self.task_script1, self.task_script1+'.bak')
         shutil.copy(self.task_script2, self.task_script2+'.bak')
         shutil.copy(self.task_script3, self.task_script3+'.bak')
@@ -38,10 +39,6 @@ class FlaskTest(TestCase):
         remove(self.task_script1+'.bak')
         remove(self.task_script2+'.bak')
         remove(self.task_script3+'.bak')
-
-    def test_set_ada_merge_dir(self):
-        resp = requests.get(self.root_url+"?ada_merge_dir=xxx")
-        self.assertIn("no merge.xml in directory: xxx", resp.text)
 
     def test_update_and_fetch_command(self):
         resp = requests.post(
@@ -95,3 +92,30 @@ class FlaskTest(TestCase):
                          "ict.ada.merge.dump.DumpJob -libjars $libs -files data"
                          " -conf merge.xml 2>&1 bbs,web gdb-json",
                          resp_data['task3'].strip())
+
+
+class ConfigUpdateTest(TestCase):
+
+    root_url = 'http://127.0.0.1:5000'
+    CONFIG_JSON = join(dirname(dirname(abspath(__file__))), "config.json")
+
+    def setUp(self):
+        shutil.copy(self.CONFIG_JSON, self.CONFIG_JSON+'.bak')
+        self.original_ada_merge_dir = json.load(
+            open(self.CONFIG_JSON))['ada_merge_dir']
+        pass
+
+    def tearDown(self):
+        shutil.copy(self.CONFIG_JSON+'.bak', self.CONFIG_JSON)
+        remove(self.CONFIG_JSON+'.bak')
+        requests.get(self.root_url + "?ada_merge_dir=" +
+                     self.original_ada_merge_dir)
+
+
+    def test_set_ada_merge_dir(self):
+        resp = requests.get(self.root_url+"?ada_merge_dir=xxx")
+        self.assertIn("no merge.xml in directory: xxx", resp.text)
+        new_ada_merge_dir = "/Users/laike9m/Desktop/ada-merge"
+        requests.get(self.root_url + "?ada_merge_dir=" + new_ada_merge_dir)
+        self.assertEqual(json.load(open(self.CONFIG_JSON))['ada_merge_dir'],
+                         new_ada_merge_dir)

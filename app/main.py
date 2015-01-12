@@ -12,7 +12,7 @@ import arrow
 import pika
 from utils import get_config, update_config, get_mergejson_path_on_hdfs,\
     update_and_fetch_mrtask_script, get_mergejson_relative_path, \
-    set_ada_merge_dir
+    set_ada_merge_dir, get_path_in_ada_merge_dir
 from settings import *
 import traceback
 from pprint import pprint
@@ -72,7 +72,7 @@ def init_mr_task():
     print(request.form.items())
     tuple_list = request.form.items()
     mr_task_type = tuple_list[0][0]
-    script_location = MR_TASK[mr_task_type]
+    script_location = get_path_in_ada_merge_dir(MR_TASK[mr_task_type])
     kwargs = {}
     if len(tuple_list) > 1:
         json_file_type, json_file_path = tuple_list[1]
