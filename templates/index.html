@@ -15,191 +15,282 @@
   <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-1.11.2.min.js') }}"></script>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+  <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
   <script src="http://malsup.github.com/jquery.form.js"></script>
 </head>
 
 <body>
+<ul class="nav nav-tabs">
+  <li><a href="#home" data-toggle="tab">Home</a></li>
+  <li><a href="#upload" data-toggle="tab">upload</a></li>
+</ul>
+<div class="tab-content">
+  <div class="tab-pane fade in active" id="home">
+    <div class="row">
+      <div class="col-lg-7 col-lg-offset-1" style="margin-top: 50px">
+        <p>
+          <strong>使用说明：</strong>先修改 merge.xml, 点击"确定", 之后会显示 core-site, mapred-site, hbase-site 的配置
+          <br/> 这时就不能修改 core-site, mapred-site, hbase-site 的值了。 如果想修改, 刷新页面重来。
+          <br/> 修改那些不符合要求的配置项（一般不用改），点击"执行"
+          <br> <strong> 参数说明</strong>
+          <br> merge-json: 输入的json文件, 代表了要融合的点, 应该存放在36的 /home/ada/cyx/entitymerge
+          <br> 之后会把这个文件放到HDFS上的 /tmp/sname-merge/YY-MM-DD/ 文件夹中
+          <br> gdb-json: 实体融合输出json, 这个路径表示输出文件在 HDFS 的存放路径
+        </p>
+      </div>
+    </div>
+    <meta id="data" data-name="{{ ada_merge_dir }}">
+    <div class="row">
+      <div class="col-lg-7 col-lg-offset-1" style="margin-top: 50px">
+        <select id="ada_merge_dir_select">
+          {% for ada_merge_dir in ada_merge_dir_list %}
+          <option id="{{ ada_merge_dir }}" value="{{ ada_merge_dir }}">
+            {{ ada_merge_dir }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <script>
+      var ada_merge_dir = $("#data").data()['name'];
+      console.log("ada_merge_dir:", ada_merge_dir);
+      if (ada_merge_dir.length > 1) {
+        $("#ada_merge_dir_select").val(ada_merge_dir);
+      }
+      $("#ada_merge_dir_select").change(function(){
+        var selectedDir = $("select option:selected").attr('value');
+        console.log(selectedDir);
+        console.log(selectedDir.length);
+        window.location.search = "?ada_merge_dir=" + encodeURIComponent(selectedDir);
+      });
+    </script>
+    <div class="container">
 
-<div class="row">
-  <div class="col-lg-7 col-lg-offset-1" style="margin-top: 50px">
-  <p>
-    <strong>使用说明：</strong>先修改 merge.xml, 点击"确定", 之后会显示 core-site, mapred-site, hbase-site 的配置
-    <br/> 这时就不能修改 core-site, mapred-site, hbase-site 的值了。 如果想修改, 刷新页面重来。
-    <br/> 修改那些不符合要求的配置项（一般不用改），点击"执行"
-    <br> <strong> 参数说明</strong>
-    <br> merge-json: 输入的json文件, 代表了要融合的点, 应该存放在36的 /home/ada/cyx/entitymerge
-    <br> 之后会把这个文件放到HDFS上的 /tmp/sname-merge/YY-MM-DD/ 文件夹中
-    <br> gdb-json: 实体融合输出json, 这个路径表示输出文件在 HDFS 的存放路径
-  </p>
-  </div>
-</div>
-<meta id="data" data-name="{{ ada_merge_dir }}">
-<div class="row">
-  <div class="col-lg-7 col-lg-offset-1" style="margin-top: 50px">
-  <select id="ada_merge_dir_select">
-    {% for ada_merge_dir in ada_merge_dir_list %}
-      <option id="{{ ada_merge_dir }}" value="{{ ada_merge_dir }}">
-        {{ ada_merge_dir }}
-      </option>
-    {% endfor %}
-  </select>
-  </div>
-</div>
-<script>
-  var ada_merge_dir = $("#data").data()['name'];
-  console.log("ada_merge_dir:", ada_merge_dir);
-  if (ada_merge_dir.length > 1) {
-    $("#ada_merge_dir_select").val(ada_merge_dir);
-  }
-  $("#ada_merge_dir_select").change(function(){
-    var selectedDir = $("select option:selected").attr('value');
-    console.log(selectedDir);
-    console.log(selectedDir.length);
-    window.location.search = "?ada_merge_dir=" + encodeURIComponent(selectedDir);
-  });
-</script>
-<div class="container">
-
-  <form method="Post" id="config_input">
-    <div id="config">
-      <h2>merge.xml</h2>
-      {% for k, v in config.iteritems() %}
-        <div class="input-group">
-          <span class="input-group-addon">{{ k }}</span>
-          <input name="{{ k }}" type="text" class="form-control" placeholder="{{ v }}">
+      <form method="Post" id="config_input">
+        <div id="config">
+          <h2>merge.xml</h2>
+          {% for k, v in config.iteritems() %}
+          <div class="input-group">
+            <span class="input-group-addon">{{ k }}</span>
+            <input name="{{ k }}" type="text" class="form-control" placeholder="{{ v }}">
+          </div>
+          {% endfor %}
         </div>
-      {% endfor %}
-    </div>
-    <div id="userinput" style="margin-top: 10px">
-      {% set channels = ['baidubaike','wikibaike','web','news','bbs','weibo','hudongbaike'] %}
-      {% for channel in channels %}
-        <label class="checkbox-inline">
-          <input type="checkbox" name="channel" value={{channel}}>{{channel}}
-        </label>
-      {% endfor %}
-      <div class="input-group">
-        <span class="input-group-addon">merge-json</span>
-        <!--仅有这两个配置的是必须填写的-->
-        <input name="merge-json" type="text" class="form-control" placeholder="">
+        <div id="userinput" style="margin-top: 10px">
+          {% set channels = ['baidubaike','wikibaike','web','news','bbs','weibo','hudongbaike'] %}
+          {% for channel in channels %}
+          <label class="checkbox-inline">
+            <input type="checkbox" name="channel" value={{channel}}>{{channel}}
+          </label>
+          {% endfor %}
+          <div class="input-group">
+            <span class="input-group-addon">merge-json</span>
+            <!--仅有这两个配置的是必须填写的-->
+            <input name="merge-json" type="text" class="form-control" placeholder="">
+          </div>
+          <div class="input-group">
+            <span class="input-group-addon">gdb-json</span>
+            <input name="gdb-json" type="text" class="form-control" placeholder="">
+          </div>
+        </div>
+      </form>
+      <div style="text-align: center">
+        <button id='confirm' value="确定" onclick="get_config()" style="margin: 10px">
+          确定
+        </button>
       </div>
-      <div class="input-group">
-        <span class="input-group-addon">gdb-json</span>
-        <input name="gdb-json" type="text" class="form-control" placeholder="">
-      </div>
-    </div>
-  </form>
-  <div style="text-align: center">
-    <button id='confirm' value="确定" onclick="get_config()" style="margin: 10px">
-      确定
-    </button>
-  </div>
-  <form method="Post" action="/new_mr_task/" target="_blank">
-    <div class="input-group">
-      <span class="input-group-addon">task1</span>
-      <input name='1' id="task1" class="form-control" placeholder="task1 command" readonly>
+      <form method="Post" action="/new_mr_task/" target="_blank">
+        <div class="input-group">
+          <span class="input-group-addon">task1</span>
+          <input name='1' id="task1" class="form-control" placeholder="task1 command" readonly>
       <span class="input-group-btn">
         <button type="submit" class="btn btn-default" disabled>执行</button>
         <input name="merge-json" id="hidden-merge-json" class="form-control" style="display: none">
       </span>
-    </div>
-  </form>
-  <form method="Post" action="/new_mr_task/" target="_blank">
-    <div class="input-group">
-      <span class="input-group-addon">task2</span>
-      <input name='2' id="task2" class="form-control" placeholder="task2 command" readonly>
+        </div>
+      </form>
+      <form method="Post" action="/new_mr_task/" target="_blank">
+        <div class="input-group">
+          <span class="input-group-addon">task2</span>
+          <input name='2' id="task2" class="form-control" placeholder="task2 command" readonly>
       <span class="input-group-btn">
         <button type="submit" class="btn btn-default" disabled>执行</button>
       </span>
-    </div>
-  </form>
-  <form method="Post" action="/new_mr_task/" target="_blank">
-    <div class="input-group">
-      <span class="input-group-addon">task3</span>
-      <input name='3' id="task3" class="form-control" placeholder="task2 command" readonly>
-      <input name="gdb-json" id="hidden-gdb-json" class="form-control" style="display: none">
+        </div>
+      </form>
+      <form method="Post" action="/new_mr_task/" target="_blank">
+        <div class="input-group">
+          <span class="input-group-addon">task3</span>
+          <input name='3' id="task3" class="form-control" placeholder="task2 command" readonly>
+          <input name="gdb-json" id="hidden-gdb-json" class="form-control" style="display: none">
       <span class="input-group-btn">
         <button type="submit" class="btn btn-default" disabled>执行</button>
       </span>
-    </div>
-  </form>
-  <footer style="height: 100px"></footer>
-  <script>
-    $(document).ready(function(){
-      /* 表单填充 */
-      $.each($("div#config .input-group input"), function(index, input){
-        $(input).val($(input).attr("placeholder"));
-      });
-      $.each($("div#userinput .input-group input"), function(index, input){
-        $(input).val($(input).attr("placeholder"));
-      });
-      /* form提交后获取mr command */
-      var url = document.URL;
-      if (url.indexOf('?') !== -1) {
-        url = url.split('?')[0];
-      }
-      if (url.charAt(url.length-1) === '/') {
-        url = url.slice(0, url.length - 1);  // remove trailing slash
-      }
-      $("#config_input").ajaxForm({
-        url : url + '/config/',  // need prefix
-        dataType : 'json',
-        success : function (response) {
-          console.log(response);
-          $("#task1").val(response.task1);
-          $("#task2").val(response.task2);
-          $("#task3").val(response.task3);
-          $("#hidden-merge-json").val(response.task1.split(' ').pop());
-          $("#hidden-gdb-json").val(response.task3.split(' ').pop());
-          $(".btn-default").attr("disabled", false);
+        </div>
+      </form>
+      <footer style="height: 100px"></footer>
+      <script>
+        $(document).ready(function(){
+          /* 表单填充 */
+          $.each($("div#config .input-group input"), function(index, input){
+            $(input).val($(input).attr("placeholder"));
+          });
+          $.each($("div#userinput .input-group input"), function(index, input){
+            $(input).val($(input).attr("placeholder"));
+          });
+          /* form提交后获取mr command */
+          var url = document.URL;
+          if (url.indexOf('?') !== -1) {
+            url = url.split('?')[0];
+          }
+          if (url.charAt(url.length-1) === '/') {
+            url = url.slice(0, url.length - 1);  // remove trailing slash
+          }
+          $("#config_input").ajaxForm({
+            url : url + '/config/',  // need prefix
+            dataType : 'json',
+            success : function (response) {
+              console.log(response);
+              $("#task1").val(response.task1);
+              $("#task2").val(response.task2);
+              $("#task3").val(response.task3);
+              $("#hidden-merge-json").val(response.task1.split(' ').pop());
+              $("#hidden-gdb-json").val(response.task3.split(' ').pop());
+              $(".btn-default").attr("disabled", false);
+            }
+          });
+        });
+        function get_config(){
+          var configForm = $("#config");
+          var coreSiteInput = $("#config div input[name='core-site']");
+          var mapredSiteInput = $("#config div input[name='mapred-site']");
+          var hbaseSiteInput = $("#config div input[name='hbase-site']");
+          var coreSite = coreSiteInput.val();
+          var mapredSite = mapredSiteInput.val();
+          var hbaseSite = hbaseSiteInput.val();
+          configForm.append($("<h2>core-site.xml</h2>"));
+          updatePageWithXml(coreSite, function(){
+            configForm.append($("<h2>mapred-site.xml</h2>"));
+            updatePageWithXml(mapredSite, function(){
+              configForm.append($("<h2>hbase-site.xml</h2>"));
+              updatePageWithXml(hbaseSite, function(){
+                $('<div style="margin: 10px; text-align: center">' +
+                  '<button style="width: 100px" type="submit">更新配置</button>')
+                  .insertAfter("#userinput");
+              });
+            });
+          });
+          coreSiteInput.attr('readonly', true);
+          mapredSiteInput.attr('readonly', true);
+          hbaseSiteInput.attr('readonly', true);
+          $("#confirm").remove();
+
+          function updatePageWithXml(filepath, callback) {
+            $.getJSON('/config/' + filepath, {
+            }, function (data) {
+              $.each(data, function(key, value){
+                configForm.append(
+                  $("<div class='input-group'></div>")
+                    .append($("<span class='input-group-addon'></span>").text(key))
+                    .append($("<input type='text' class='form-control'>")
+                      .attr("name", key)
+                      .attr("placeholder", value)
+                      .val(value)
+                  )
+                );
+              });
+              callback();
+            });
+          }
         }
-      });
-    });
-    function get_config(){
-      var configForm = $("#config");
-      var coreSiteInput = $("#config div input[name='core-site']");
-      var mapredSiteInput = $("#config div input[name='mapred-site']");
-      var hbaseSiteInput = $("#config div input[name='hbase-site']");
-      var coreSite = coreSiteInput.val();
-      var mapredSite = mapredSiteInput.val();
-      var hbaseSite = hbaseSiteInput.val();
-      configForm.append($("<h2>core-site.xml</h2>"));
-      updatePageWithXml(coreSite, function(){
-        configForm.append($("<h2>mapred-site.xml</h2>"));
-        updatePageWithXml(mapredSite, function(){
-          configForm.append($("<h2>hbase-site.xml</h2>"));
-          updatePageWithXml(hbaseSite, function(){
-            $('<div style="margin: 10px; text-align: center">' +
-              '<button style="width: 100px" type="submit">更新配置</button>')
-              .insertAfter("#userinput");
-          });
+
+      </script>
+    </div>
+  </div>
+  <div class="tab-pane fade" id="upload">
+    <div class="row">
+      <div class="col-lg-7 col-lg-offset-1" style="margin-top: 50px">
+        <form method="POST" enctype=multipart/form-data>
+          上传文件夹<input type='file' name="file" webkitdirectory > <br><br>
+          上传文件<input type="file" name="file" multiple >
+          <button id="upload-btn" type="button" style="margin-top: 10px">upload</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-10 col-lg-offset-1" style="margin-top: 50px">
+        <fieldset id="progress" style="display: none">
+          <legend>Files Progress</legend>
+          <div class="progress-trough">
+            <div id="progress-bar" class="progress-bar">0%</div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+
+    <script>
+      var files = [];
+      $(document).ready(function(){
+        $("input").change(function(){
+          files = this.files;
+          console.log(files);
+          $("input").not(this).attr("disabled", true);
         });
       });
-      coreSiteInput.attr('readonly', true);
-      mapredSiteInput.attr('readonly', true);
-      hbaseSiteInput.attr('readonly', true);
-      $("#confirm").remove();
 
-      function updatePageWithXml(filepath, callback) {
-        $.getJSON('/config/' + filepath, {
-        }, function (data) {
-          $.each(data, function(key, value){
-            configForm.append(
-              $("<div class='input-group'></div>")
-                .append($("<span class='input-group-addon'></span>").text(key))
-                .append($("<input type='text' class='form-control'>")
-                  .attr("name", key)
-                  .attr("placeholder", value)
-                  .val(value)
-              )
-            );
-          });
-          callback();
+      $("#upload-btn").click(function(e){
+        e.preventDefault();
+        doUpload()
+      });
+
+      function doUpload() {
+        $("#progress").show();
+        var $progressBar = $("#progress-bar");
+        var fd = new FormData();
+        for (var i = 0; i < files.length; i++) {
+          fd.append("file", files[i]);
+        }
+        if (files.length === 0) {
+          alert("未选择文件");
+          return;
+        }
+        var xhr = $.ajax({
+          xhr: function() {
+            var xhrobj = $.ajaxSettings.xhr();
+            if (xhrobj.upload) {
+              xhrobj.upload.addEventListener("progress", function(event) {
+                var percent = 0;
+                var position = event.loaded || event.position;
+                var total    = event.total;
+                if (event.lengthComputable) {
+                  percent = Math.ceil(position / total * 100);
+                }
+
+                // Set the progress bar.
+                $progressBar.css({"width": percent + "%"});
+                $progressBar.text(percent + "%");
+              }, false)
+            }
+            return xhrobj;
+          },
+          url: "/upload/",
+          method: "POST",
+          data: fd,
+          contentType: false,
+          processData: false,
+          cache: false,
+          success: function(data){
+            console.log(data);
+            $progressBar.css({"width": "100%"});
+            $("input").removeAttr("disabled");
+            alert("上传成功");
+          }
         });
       }
-    }
-
-  </script>
+    </script>
+  </div>
 </div>
 
 </body>
