@@ -213,17 +213,15 @@
       <div class="col-lg-7 col-lg-offset-1" style="margin-top: 50px">
         <p>
           上传文件示例：<br>
-          路径填写 /home/ada/linjiyuan<br>
+          路径填写 /home/ada/linjiyuan，若不存在会创建<br>
           上传文件 sample.txt<br>
           会生成 /home/ada/linjiyuan/sample.txt
         </p>
 
-        <form method="POST" enctype=multipart/form-data>
-          上传文件夹 (chrome only)<input type='file' name="file" webkitdirectory > <br>
-          上传文件<input type="file" name="file" multiple >
-          <input type="text" name="upload_path" id="upload_path" style="width: 400px" placeholder="填写传到服务器上的路径">
-          <button id="upload-btn" type="button" style="margin-top: 10px">upload</button>
-        </form>
+        上传文件夹 (chrome only)<input id="upfolder" type='file' name="file" webkitdirectory > <br>
+        上传文件<input id="upfile" type="file" name="file" multiple >
+        <input type="text" name="upload_path" id="upload_path" style="width: 400px" placeholder="填写传到服务器上的路径">
+        <button id="upload-btn" type="button" style="margin-top: 10px">upload</button>
       </div>
     </div>
 
@@ -240,10 +238,15 @@
 
     <script>
       var files = [];
+      var fileUploadInputs = {};
+      $.each($("input[type=file]"), function(index, e){
+        fileUploadInputs[$(e).attr('id')] = $(e);
+      });
+      var selected_input;
       $(document).ready(function(){
-        $("input").change(function(){
+        $("input[type=file]").change(function(){
           files = this.files ? this.files : files;
-          console.log(files);
+          selected_input = fileUploadInputs[$(this).attr('id')];
           $("input[type=file]").not(this).attr("disabled", true);
         });
       });
@@ -262,6 +265,10 @@
         fd.append("upload_path", upload_path);
         if (files.length === 0 || upload_path === '') {
           alert("请选择要上传的文件并填写上传路径");
+          return;
+        }
+        if (upload_path.charAt(0) !== '/') {
+          alert("上传路径必须是绝对路径, 请重新填写");
           return;
         }
         $("#progress").show();
@@ -292,10 +299,23 @@
           processData: false,
           cache: false,
           success: function(data){
-            console.log(data);
-            $progressBar.css({"width": "100%"});
+            console.log(data);  // 这个 data 已经是object, 不用再parse
+            if (data.success) {
+              $progressBar.css({"width": "100%"});
+              alert("上传成功");
+            } else {
+              var msg = "上传过程中遇到问题";
+              msg += "uploaded files: " + data.uploaded.join(',') + '\n';
+              msg += "error: " + data.error;
+              $progressBar.css({"width": 0});
+              alert(msg);
+            }
             $("input").removeAttr("disabled");
-            alert("上传成功");
+            selected_input.replaceWith(selected_input.clone(true));  // clear file input
+            $.each($("input[type=file]"), function(index, e){
+              fileUploadInputs[$(e).attr('id')] = $(e);
+            });
+            files = [];
           }
         });
       }

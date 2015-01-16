@@ -32,9 +32,32 @@ connection_keeper = {}
 
 @app.route('/upload/', methods=['POST'])
 def upload():
+    return_json = {'success': False, 'uploaded': [], 'error': ''}
     pprint(request.files.getlist("file"))
-    # pprint(request.files.getlist("file")[2].filename)
-    return "upload success"
+    upload_path = request.form.get('upload_path')
+
+    for file in request.files.getlist("file"):
+        file_dir = os.path.join(upload_path, os.path.dirname(file.filename))
+        if not os.path.exists(file_dir):
+            try:
+                os.makedirs(file_dir)  # create subdir for upload file
+            except Exception as e:
+                return_json['error'] = str(e)
+                app.logger.error(str(e))
+                return jsonify(return_json)
+        try:
+            file.save(os.path.join(upload_path, file.filename))
+        except Exception as e:
+            return_json['error'] = str(e)
+            app.logger.error(str(e))
+            return jsonify(return_json)
+        else:
+            return_json['uploaded'].append(file.filename)
+            app.logger.info("upload success: " + file.filename)
+
+    return_json['success'] = True
+    return jsonify(return_json)
+
 
 @app.route('/')
 def index():
@@ -49,7 +72,6 @@ def index():
     ada_merge_dir_list = json_obj["ada_merge_dir_list"]
     ada_merge_dir = json_obj["ada_merge_dir"]
     config = get_config("merge.xml")
-    print(ada_merge_dir)
     return render_template('index.html', config=config,
                            ada_merge_dir_list=ada_merge_dir_list,
                            ada_merge_dir=ada_merge_dir)
