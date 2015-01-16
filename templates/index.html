@@ -85,7 +85,7 @@
               <img src="{{ url_for('static', filename='images/teal01.png') }}">
               {{MERGE_JSON_DIR}} 目录下有这些文件(夹), 选择一个作为task1的输入, 即merge-json
             </p>
-            <select form="config_input" size="{{ merge_json_candidates|length }}" name="merge-json">
+            <select form="config_input" size="{{ merge_json_candidates|length }}" name="merge-json-local">
               {% for cand in merge_json_candidates %}
               <option value={{cand}}>{{cand}}</option>
               {% endfor %}
@@ -94,7 +94,7 @@
 
           <p>
             <img src="{{ url_for('static', filename='images/teal02.png') }}">
-            输入想要在 HDFS 存放 merge-json 的位置
+            输入想要在 HDFS 存放 merge-json 的位置，不必在最后写 merge-json 的文件名
           </p>
           <div class="input-group" style="margin-left: 30px">
             <input name="merge-json-hdfs" type="text" class="form-control" placeholder="">
@@ -134,7 +134,8 @@
           <input name='1' id="task1" class="form-control" placeholder="task1 command" readonly>
           <span class="input-group-btn">
             <button type="submit" class="btn btn-default" disabled>执行</button>
-            <input name="merge-json" id="hidden-merge-json" class="form-control" style="display: none">
+            <input name="merge-json-hdfs" id="hidden-merge-json-hdfs" class="form-control" style="display: none">
+            <input name="merge-json-local" id="hidden-merge-json-local" class="form-control" style="display: none">
           </span>
         </div>
       </form>
@@ -183,7 +184,8 @@
               $("#task1").val(response.task1);
               $("#task2").val(response.task2);
               $("#task3").val(response.task3);
-              $("#hidden-merge-json").val(response.task1.split(' ').pop());
+              $("#hidden-merge-json-hdfs").val(response.task1.split(' ').pop());
+              $("#hidden-merge-json-local").val(response.merge_json_local);
               $("#hidden-gdb-json").val(response.task3.split(' ').pop());
               $(".btn-default").attr("disabled", false);
             }

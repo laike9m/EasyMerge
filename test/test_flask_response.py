@@ -47,7 +47,8 @@ class MRCommandTest(TestCase):
                 "core-site": "conf/core-site-35.xml",
                 "mapred-site": "conf/mapred-site-35.xml",
                 "hbase-site": "conf/hbase-site-35.xml",
-                "merge-json": "merge-json",
+                "merge-json-local": "merge-json",
+                "merge-json-hdfs": "/tmp/merge-json",
                 "gdb-json": "gdb-json",
                 "channel": ["bbs", "web"],
             }
@@ -55,15 +56,14 @@ class MRCommandTest(TestCase):
         resp_data = resp.json()
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar"
                          " ict.ada.merge.loader.MergeJsonLoader -libjars"
-                         " $libs -conf merge.xml 2>&1 " +
-                         self.get_hdfs_path("merge-json"),
+                         " $libs -conf merge.xml 2>&1 /tmp/merge-json",
                          resp_data['task1'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
                          "ict.ada.merge.newid.MinIDJob -libjars $libs -conf "
                          "merge.xml 2>&1 merge-config.json",
                          resp_data['task2'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
-                         "ict.ada.merge.dump.DumpJob -libjars $libs -files data"
+                         "ict.ada.merge.dump.DumpJob -libjars $libs -files $files"
                          " -conf merge.xml 2>&1 bbs,web gdb-json",
                          resp_data['task3'].strip())
 
@@ -73,7 +73,8 @@ class MRCommandTest(TestCase):
                 "core-site": "conf/core-site-35.xml",
                 "mapred-site": "conf/mapred-site-35.xml",
                 "hbase-site": "conf/hbase-site-35.xml",
-                "merge-json": "",
+                "merge-json-local": "",
+                "merge-json-hdfs": "",
                 "gdb-json": "",
                 "channel": []
             }
@@ -81,15 +82,14 @@ class MRCommandTest(TestCase):
         resp_data = resp.json()
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar"
                          " ict.ada.merge.loader.MergeJsonLoader -libjars"
-                         " $libs -conf merge.xml 2>&1 " +
-                         self.get_hdfs_path("merge-json"),
+                         " $libs -conf merge.xml 2>&1 /tmp/merge-json",
                          resp_data['task1'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
                          "ict.ada.merge.newid.MinIDJob -libjars $libs -conf "
                          "merge.xml 2>&1 merge-config.json",
                          resp_data['task2'].strip())
         self.assertEqual(u"hadoop jar target/ada-merge-0.1-SNAPSHOT.jar "
-                         "ict.ada.merge.dump.DumpJob -libjars $libs -files data"
+                         "ict.ada.merge.dump.DumpJob -libjars $libs -files $files"
                          " -conf merge.xml 2>&1 bbs,web gdb-json",
                          resp_data['task3'].strip())
 

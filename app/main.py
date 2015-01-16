@@ -92,7 +92,6 @@ def read_or_write_config(filepath):
         return jsonify(**get_config(filepath))
     if request.method == 'POST':
         configs = {t[0]: t[1] for t in request.form.items()}
-        print("test:", configs['test'])
         configs["channel"] = request.form.getlist("channel")
 
         update_config('merge.xml', configs)
@@ -100,22 +99,31 @@ def read_or_write_config(filepath):
         update_config(configs['mapred-site'], configs)
         update_config(configs['hbase-site'], configs)
 
-        return jsonify(update_and_fetch_mrtask_script(configs))
+        MERGE_JSON_DIR = json.load(open("../config.json"))["merge_json_dir"]
+        merge_json_local = os.path.join(MERGE_JSON_DIR, configs['merge-json-local'])
+        return_json = update_and_fetch_mrtask_script(configs)
+        return_json.update({'merge_json_local': merge_json_local})
+        return jsonify(return_json)
 
 
 @app.route('/new_mr_task/', methods=['POST'])
 def init_mr_task():
     print(request.form.items())
-    tuple_list = request.form.items()
-    mr_task_type = tuple_list[0][0]
+    form_data = {item[0]: item[1] for item in request.form.items()}
+    for key in form_data.keys():
+        if key in ('1', '2', '3'):
+            mr_task_type = key
+            break
     script_location = get_path_in_ada_merge_dir(MR_TASK[mr_task_type])
     kwargs = {}
     if len(tuple_list) > 1:
-        json_file_type, json_file_path = tuple_list[1]
-        if json_file_type == 'merge-json':
-            kwargs = {'merge_json': json_file_path}
-        if json_file_type == 'gdb-json':
-            kwargs = {'gdb_json': json_file_path}
+        if mr_task_type == '1':
+            kwargs = {
+                'merge_json_hdfs': form_data['merge-json-hdfs'],
+                'merge_json_local': form_data['merge-json-local']
+            }
+        if mr_task_type == '3':
+            kwargs = {'gdb_json': form_data['gdb-json']}
 
     new_celery_task_id = str(arrow.utcnow().timestamp)
     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
@@ -197,7 +205,7 @@ celery = make_celery(app)
 
 
 @celery.task(name="app.main.init_mr_task", bind=True)
-def init_mr_task(self, script_location, merge_json=None, gdb_json=None):
+def init_mr_task(self, script_location, merge_json_local=None, merge_json_hdfs=None, gdb_json=None):
     """ 这个脚本的路径 are relative path to where celery is run
     :merge_json merge_json 在 HDFS 的路径
     """
@@ -228,38 +236,32 @@ def init_mr_task(self, script_location, merge_json=None, gdb_json=None):
 
     # HDFS operations
 
-    if merge_json:
-        """task1, 需要先把 merge_json 放到HDFS 的相应位置
+    if merge_json_local:
+        """task1, 需要先把 merge_json 放到 HDFS 的相应位置
         """
         # check input file/folder existence
 
-        MERGE_JSON_DIR = json.load(open(os.path.join(
-            EasyMerge_root, "config.json")))["merge_json_dir"]
-
-        merge_json_localpath = os.path.join(
-            MERGE_JSON_DIR, get_mergejson_relative_path(merge_json))
-
-        if not os.path.exists(merge_json_localpath):
+        if not os.path.exists(merge_json_local):
             task_channel.basic_publish(
                 exchange='',
                 routing_key=self.request.id,
                 body=json.dumps({
                     "type": MERGEJSON_NOT_EXIST_ERR,
-                    "content": get_mergejson_relative_path(merge_json)
+                    "content": merge_json_local
                 })
             )
             conn.close()
             return
 
-        proc = Popen("hadoop fs -rmr %s 2>&1" % merge_json, shell=True,
+        proc = Popen("hadoop fs -rmr %s 2>&1" % merge_json_hdfs, shell=True,
                      stdout=PIPE)
         stdout1, _ = proc.communicate()
 
         # will cause timeout putting to fs without trailing slash
-        merge_json_localpath = merge_json_localpath+'/' \
-            if os.path.isdir(merge_json_localpath) else merge_json_localpath
+        merge_json_local = merge_json_local+'/' \
+            if os.path.isdir(merge_json_local) else merge_json_local
         proc = Popen(
-            "hadoop fs -copyFromLocal %s %s 2>&1" % (merge_json_localpath, merge_json),
+            "hadoop fs -copyFromLocal %s %s 2>&1" % (merge_json_local, merge_json_hdfs),
             shell=True,
             stdout=PIPE
         )
