@@ -211,9 +211,17 @@
   <div class="tab-pane fade" id="upload">
     <div class="row">
       <div class="col-lg-7 col-lg-offset-1" style="margin-top: 50px">
+        <p>
+          上传文件示例：<br>
+          路径填写 /home/ada/linjiyuan<br>
+          上传文件 sample.txt<br>
+          会生成 /home/ada/linjiyuan/sample.txt
+        </p>
+
         <form method="POST" enctype=multipart/form-data>
-          上传文件夹<input type='file' name="file" webkitdirectory > <br><br>
+          上传文件夹 (chrome only)<input type='file' name="file" webkitdirectory > <br>
           上传文件<input type="file" name="file" multiple >
+          <input type="text" name="upload_path" id="upload_path" style="width: 400px" placeholder="填写传到服务器上的路径">
           <button id="upload-btn" type="button" style="margin-top: 10px">upload</button>
         </form>
       </div>
@@ -234,9 +242,9 @@
       var files = [];
       $(document).ready(function(){
         $("input").change(function(){
-          files = this.files;
+          files = this.files ? this.files : files;
           console.log(files);
-          $("input").not(this).attr("disabled", true);
+          $("input[type=file]").not(this).attr("disabled", true);
         });
       });
 
@@ -246,16 +254,18 @@
       });
 
       function doUpload() {
-        $("#progress").show();
-        var $progressBar = $("#progress-bar");
         var fd = new FormData();
         for (var i = 0; i < files.length; i++) {
           fd.append("file", files[i]);
         }
-        if (files.length === 0) {
-          alert("未选择文件");
+        var upload_path = $("#upload_path").val();
+        fd.append("upload_path", upload_path);
+        if (files.length === 0 || upload_path === '') {
+          alert("请选择要上传的文件并填写上传路径");
           return;
         }
+        $("#progress").show();
+        var $progressBar = $("#progress-bar");
         var xhr = $.ajax({
           xhr: function() {
             var xhrobj = $.ajaxSettings.xhr();

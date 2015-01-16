@@ -30,15 +30,11 @@ app.logger.addHandler(handler)
 
 connection_keeper = {}
 
-@app.route('/upload/', methods=['GET', 'POST'])
+@app.route('/upload/', methods=['POST'])
 def upload():
-    if request.method == 'GET':
-        return render_template('upload.html')
-    if request.method == 'POST':
-        # if request.files:
-        pprint(request.files.getlist("file"))
-        # pprint(request.files.getlist("file")[2].filename)
-        return "upload success"
+    pprint(request.files.getlist("file"))
+    # pprint(request.files.getlist("file")[2].filename)
+    return "upload success"
 
 @app.route('/')
 def index():
