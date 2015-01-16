@@ -71,10 +71,14 @@ def index():
     json_obj = json.load(open("../config.json"))
     ada_merge_dir_list = json_obj["ada_merge_dir_list"]
     ada_merge_dir = json_obj["ada_merge_dir"]
+    MERGE_JSON_DIR = json_obj["merge_json_dir"]
+    merge_json_candidates = os.listdir(MERGE_JSON_DIR)
     config = get_config("merge.xml")
     return render_template('index.html', config=config,
                            ada_merge_dir_list=ada_merge_dir_list,
-                           ada_merge_dir=ada_merge_dir)
+                           ada_merge_dir=ada_merge_dir,
+                           MERGE_JSON_DIR=MERGE_JSON_DIR,
+                           merge_json_candidates=merge_json_candidates)
 
 
 @app.route('/config/', methods=['GET', 'POST'], defaults={'filepath': ''})
@@ -88,6 +92,7 @@ def read_or_write_config(filepath):
         return jsonify(**get_config(filepath))
     if request.method == 'POST':
         configs = {t[0]: t[1] for t in request.form.items()}
+        print("test:", configs['test'])
         configs["channel"] = request.form.getlist("channel")
 
         update_config('merge.xml', configs)
@@ -227,6 +232,10 @@ def init_mr_task(self, script_location, merge_json=None, gdb_json=None):
         """task1, 需要先把 merge_json 放到HDFS 的相应位置
         """
         # check input file/folder existence
+
+        MERGE_JSON_DIR = json.load(open(os.path.join(
+            EasyMerge_root, "config.json")))["merge_json_dir"]
+
         merge_json_localpath = os.path.join(
             MERGE_JSON_DIR, get_mergejson_relative_path(merge_json))
 

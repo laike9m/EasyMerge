@@ -77,22 +77,50 @@
           </div>
           {% endfor %}
         </div>
+        <hr>
+        <p style="font-size: 18px">mapreduce 任务参数</p>
         <div id="userinput" style="margin-top: 10px">
+          <div style="text-align: center">
+            <p>
+              <img src="{{ url_for('static', filename='images/teal01.png') }}">
+              {{MERGE_JSON_DIR}} 目录下有这些文件(夹), 选择一个作为task1的输入, 即merge-json
+            </p>
+            <select form="config_input" size="{{ merge_json_candidates|length }}" name="merge-json">
+              {% for cand in merge_json_candidates %}
+              <option value={{cand}}>{{cand}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <p>
+            <img src="{{ url_for('static', filename='images/teal02.png') }}">
+            输入想要在 HDFS 存放 merge-json 的位置
+          </p>
+          <div class="input-group" style="margin-left: 30px">
+            <input name="merge-json-hdfs" type="text" class="form-control" placeholder="">
+          </div>
+
+          <br>
+          <p>
+            <img src="{{ url_for('static', filename='images/teal03.png') }}">
+            选择 task3 中融合所执行的的通道
+          </p>
           {% set channels = ['baidubaike','wikibaike','web','news','bbs','weibo','hudongbaike'] %}
           {% for channel in channels %}
-          <label class="checkbox-inline">
-            <input type="checkbox" name="channel" value={{channel}}>{{channel}}
-          </label>
+            <label class="checkbox-inline" style="margin-left: 30px">
+              <input type="checkbox" name="channel" value={{channel}}>{{channel}}
+            </label>
           {% endfor %}
-          <div class="input-group">
-            <span class="input-group-addon">merge-json</span>
-            <!--仅有这两个配置的是必须填写的-->
-            <input name="merge-json" type="text" class="form-control" placeholder="">
-          </div>
-          <div class="input-group">
-            <span class="input-group-addon">gdb-json</span>
+
+          <br><br>
+          <p>
+            <img src="{{ url_for('static', filename='images/teal04.png') }}">
+            输入 task3 的输出 gdb-json 将要被存放在 HDFS 的路径，
+          </p>
+          <div class="input-group" style="margin-left: 30px">
             <input name="gdb-json" type="text" class="form-control" placeholder="">
           </div>
+
         </div>
       </form>
       <div style="text-align: center">
@@ -104,19 +132,19 @@
         <div class="input-group">
           <span class="input-group-addon">task1</span>
           <input name='1' id="task1" class="form-control" placeholder="task1 command" readonly>
-      <span class="input-group-btn">
-        <button type="submit" class="btn btn-default" disabled>执行</button>
-        <input name="merge-json" id="hidden-merge-json" class="form-control" style="display: none">
-      </span>
+          <span class="input-group-btn">
+            <button type="submit" class="btn btn-default" disabled>执行</button>
+            <input name="merge-json" id="hidden-merge-json" class="form-control" style="display: none">
+          </span>
         </div>
       </form>
       <form method="Post" action="/new_mr_task/" target="_blank">
         <div class="input-group">
           <span class="input-group-addon">task2</span>
           <input name='2' id="task2" class="form-control" placeholder="task2 command" readonly>
-      <span class="input-group-btn">
-        <button type="submit" class="btn btn-default" disabled>执行</button>
-      </span>
+          <span class="input-group-btn">
+            <button type="submit" class="btn btn-default" disabled>执行</button>
+          </span>
         </div>
       </form>
       <form method="Post" action="/new_mr_task/" target="_blank">
@@ -124,9 +152,9 @@
           <span class="input-group-addon">task3</span>
           <input name='3' id="task3" class="form-control" placeholder="task2 command" readonly>
           <input name="gdb-json" id="hidden-gdb-json" class="form-control" style="display: none">
-      <span class="input-group-btn">
-        <button type="submit" class="btn btn-default" disabled>执行</button>
-      </span>
+          <span class="input-group-btn">
+            <button type="submit" class="btn btn-default" disabled>执行</button>
+          </span>
         </div>
       </form>
       <footer style="height: 100px"></footer>
@@ -204,7 +232,6 @@
             });
           }
         }
-
       </script>
     </div>
   </div>
@@ -284,7 +311,6 @@
                 if (event.lengthComputable) {
                   percent = Math.ceil(position / total * 100);
                 }
-
                 // Set the progress bar.
                 $progressBar.css({"width": percent + "%"});
                 $progressBar.text(percent + "%");
