@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title></title>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-1.11.2.min.js') }}"></script>
+  <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <form method="POST" enctype=multipart/form-data>
+    上传文件夹<input type='file' name="file" webkitdirectory > <br><br>
+    上传文件<input type="file" name="file" multiple >
+    <button id="upload-btn" type="button">upload</button>
+  </form>
+
+  <p>
+  <fieldset id="progress" style="display: none">
+    <legend>Files Progress</legend>
+    <div class="progress-trough">
+      <div id="progress-bar" class="progress-bar">0%</div>
+    </div>
+  </fieldset>
+
+  <script>
+    var files = [];
+    $(document).ready(function(){
+      $("input").change(function(){
+        files = this.files;
+        console.log(files);
+        $("input").not(this).attr("disabled", true);
+      });
+    });
+
+    $("#upload-btn").click(function(e){
+      e.preventDefault();
+      doUpload()
+    });
+
+    function doUpload() {
+      $("#progress").show();
+      var $progressBar = $("#progress-bar");
+      var fd = new FormData();
+      for (var i = 0; i < files.length; i++) {
+        fd.append("file", files[i]);
+      }
+      if (files.length === 0) {
+        alert("未选择文件");
+        return;
+      }
+      var xhr = $.ajax({
+        xhr: function() {
+          var xhrobj = $.ajaxSettings.xhr();
+          if (xhrobj.upload) {
+            xhrobj.upload.addEventListener("progress", function(event) {
+              var percent = 0;
+              var position = event.loaded || event.position;
+              var total    = event.total;
+              if (event.lengthComputable) {
+                percent = Math.ceil(position / total * 100);
+              }
+
+              // Set the progress bar.
+              $progressBar.css({"width": percent + "%"});
+              $progressBar.text(percent + "%");
+            }, false)
+          }
+          return xhrobj;
+        },
+        url: "/upload/",
+        method: "POST",
+        data: fd,
+        contentType: false,
+        processData: false,
+        cache: false,
+        success: function(data){
+          console.log(data);
+          $progressBar.css({"width": "100%"});
+          $("input").removeAttr("disabled");
+        }
+      });
+    }
+  </script>
+</body>
+</html>
