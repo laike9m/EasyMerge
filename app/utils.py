@@ -128,7 +128,8 @@ def update_and_fetch_mrtask_script(configs):
          open(join(ada_merge_dir, 'celery-mr-task3.sh'), 'w') as t3:
             # merge-json could be '', if so, don't update task1 script
             if configs["merge-json-hdfs"]:
-                merge_json = configs["merge-json-hdfs"]
+                merge_json = join(configs["merge-json-hdfs"],
+                                  configs['merge-json-local'])
                 task1_command = task1_command.split()[:-1]
                 task1_command.append(merge_json)
                 task1_command = ' '.join(task1_command)

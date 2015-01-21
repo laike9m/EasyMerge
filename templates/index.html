@@ -85,7 +85,7 @@
               <img src="{{ url_for('static', filename='images/teal01.png') }}">
               {{MERGE_JSON_DIR}} 目录下有这些文件(夹), 选择一个作为task1的输入, 即merge-json
             </p>
-            <select form="config_input" size="{{ merge_json_candidates|length }}" name="merge-json-local">
+            <select size="{{ merge_json_candidates|length }}" name="merge-json-local">
               {% for cand in merge_json_candidates %}
               <option value={{cand}}>{{cand}}</option>
               {% endfor %}
@@ -94,7 +94,7 @@
 
           <p>
             <img src="{{ url_for('static', filename='images/teal02.png') }}">
-            输入想要在 HDFS 存放 merge-json 的位置，不必在最后写 merge-json 的文件名
+            输入想要在 HDFS 存放 merge-json 的位置（如/tmp），不必在最后写 merge-json 的文件名，即不必写成/tmp/xxx.json
           </p>
           <div class="input-group" style="margin-left: 30px">
             <input name="merge-json-hdfs" type="text" class="form-control" placeholder="">

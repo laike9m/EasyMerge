@@ -93,6 +93,8 @@ def read_or_write_config(filepath):
     if request.method == 'POST':
         configs = {t[0]: t[1] for t in request.form.items()}
         configs["channel"] = request.form.getlist("channel")
+        if "merge-json-local" not in configs:
+            configs["merge-json-local"] = ''
 
         update_config('merge.xml', configs)
         update_config(configs['core-site'], configs)
@@ -125,6 +127,7 @@ def init_mr_task():
         if mr_task_type == '3':
             kwargs = {'gdb_json': form_data['gdb-json']}
 
+    print(kwargs)
     new_celery_task_id = str(arrow.utcnow().timestamp)
     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
     channel = connection.channel()
