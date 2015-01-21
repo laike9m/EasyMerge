@@ -10,8 +10,7 @@ from flask import send_from_directory, make_response
 from celery import Celery
 import arrow
 import pika
-from utils import get_config, update_config, get_mergejson_path_on_hdfs,\
-    update_and_fetch_mrtask_script, get_mergejson_relative_path, \
+from utils import get_config, update_config, update_and_fetch_mrtask_script, \
     set_ada_merge_dir, get_path_in_ada_merge_dir
 from settings import *
 import traceback
