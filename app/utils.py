@@ -74,27 +74,6 @@ def update_config(filepath, configs):
 
     ET.ElementTree(root).write(filepath)
 
-def get_mergejson_path_on_hdfs(merge_json, date=None):
-    """
-    :date 测试用
-    :merge_json 相对 MERGE_JSON_DIR 的路径
-    :return merge-json 在 HDFS 上的路径
-    """
-    date = arrow.now().format("YYMMDD") if date is None else date
-    merge_json = merge_json.lstrip('/')
-    return join(MERGE_JSON_HDFS_DIR, date, merge_json)
-
-def get_mergejson_relative_path(mergejson_path_on_hdfs):
-    """
-    获取merge本地路径, relative to MERGE_JSON_DIR
-    """
-    import re
-    date = re.compile(r".*([0-9]{6}/)")
-    match_obj = date.match(mergejson_path_on_hdfs)
-    if match_obj:
-        return mergejson_path_on_hdfs[match_obj.end():]
-    else:
-        return None
 
 def update_and_fetch_mrtask_script(configs):
     """

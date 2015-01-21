@@ -123,6 +123,7 @@ def init_mr_task():
             kwargs = {
                 'merge_json_hdfs': form_data['merge-json-hdfs'],
                 'merge_json_local': form_data['merge-json-local']
+                # 这里传过来的 merge-json-local 已经是完整的绝对路径了, 而非文件名
             }
         if mr_task_type == '3':
             kwargs = {'gdb_json': form_data['gdb-json']}

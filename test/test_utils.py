@@ -21,24 +21,3 @@ class TestUtil(TestCase):
         new_xml_tree = self.get_xml_tree()
         # pass element to xml_compare, not ElementTree
         self.assertEqual(True, xml_compare(self.old_xml_tree, new_xml_tree))
-
-    def test_get_mergejson_path_on_hdfs(self):
-        hdfspath = utils.get_mergejson_path_on_hdfs("aaa", "150315")
-        self.assertEqual("/tmp/sname-merge/150315/aaa", hdfspath)
-        hdfspath = utils.get_mergejson_path_on_hdfs("/ppp/aaa", "150315")
-        self.assertEqual("/tmp/sname-merge/150315/ppp/aaa", hdfspath)
-        hdfspath = utils.get_mergejson_path_on_hdfs("aaa/", "150315")
-        self.assertEqual("/tmp/sname-merge/150315/aaa/", hdfspath)
-        hdfspath = utils.get_mergejson_path_on_hdfs("/dsd/aaa/", "150315")
-        self.assertEqual("/tmp/sname-merge/150315/dsd/aaa/", hdfspath)
-
-    def test_get_mergejson_relative_path(self):
-        hdfspath = "/tmp/sname-merge/150315/aaa"
-        relative_path = utils.get_mergejson_relative_path(hdfspath)
-        self.assertEqual("aaa", relative_path)
-        hdfspath = "/otherpath/808012/aaa/2323"
-        relative_path = utils.get_mergejson_relative_path(hdfspath)
-        self.assertEqual("aaa/2323", relative_path)
-        hdfspath = "/tmp/sname-merge/15031/aaa"
-        relative_path = utils.get_mergejson_relative_path(hdfspath)
-        self.assertEqual(None, relative_path)
