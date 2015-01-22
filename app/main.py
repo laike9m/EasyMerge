@@ -117,7 +117,7 @@ def init_mr_task():
             break
     script_location = get_path_in_ada_merge_dir(MR_TASK[mr_task_type])
     kwargs = {}
-    if len(tuple_list) > 1:
+    if len(form_data) > 1:
         if mr_task_type == '1':
             kwargs = {
                 'merge_json_hdfs': form_data['merge-json-hdfs'],
@@ -151,7 +151,7 @@ def task(celery_task_id):
                 try:
                     body = json.loads(body)
                 except ValueError:
-                    app.logger.error("json decode error: ", body)
+                    app.logger.error("json decode error: " + body)
                     return jsonify(request='')
                 channel.basic_ack(method_frame.delivery_tag)
                 if body['type'] == OUTPUT:
@@ -159,11 +159,13 @@ def task(celery_task_id):
                 elif body['type'] == QUIT:
                     app.logger.info("task finish")
                     connection_keeper[celery_task_id].close()
+                    channel.basic_cancel(celery_task_id)
                     del connection_keeper[celery_task_id]
                     return jsonify(content="quit")
                 elif body['type'] == MERGEJSON_NOT_EXIST_ERR:
                     app.logger.warning("merge_json_not_exist")
                     connection_keeper[celery_task_id].close()
+                    channel.basic_cancel(celery_task_id)
                     del connection_keeper[celery_task_id]
                     return jsonify(content="merge_json_not_exist", file=body['content'])
                 else:

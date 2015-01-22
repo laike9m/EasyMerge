@@ -18,6 +18,7 @@
         $(function() {
           $.getJSON('/task/' + celery_task_id + '?fetch=true', {
           }, function(data) {
+            console.log(data);
             switch (data.content) {
               case "quit":
                 resultElem.append("<br/><br />" + "Task complete");
@@ -33,7 +34,6 @@
               case undefined: // 如果没有新输出, result is undefined
                 break;
               default:
-                console.log(data);
                 $("#result").append("<br/>" + insertLink(data.content));
             }
             window.scrollTo(0, document.body.scrollHeight);

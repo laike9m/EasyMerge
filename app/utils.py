@@ -11,8 +11,7 @@ from freezegun import freeze_time
 from settings import *
 
 freezer = freeze_time(FROZEN_TIME)
-if debug:
-    freezer.start()
+freezer.start()
 
 CONFIG_JSON = join(dirname(dirname(abspath(__file__))), "config.json")
 
